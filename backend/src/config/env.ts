@@ -7,7 +7,7 @@ export const config = {
   url: process.env.VITE_BACKEND_URL || '',
   timeout: Number(process.env.VITE_TIMEOUT || 90000),
   provider: process.env.LLM_PROVIDER || 'ollama',
-  embeddings_provider: process.env.EMB_PROVIDER || 'openai',
+  embeddings_provider: process.env.EMB_PROVIDER || 'ollama',
   openrouter: process.env.OPENROUTER_API_KEY || '',
   openrouter_model: process.env.openrouter_model || '',
   requesty: process.env.REQUESTY_API_KEY || '',
@@ -49,8 +49,8 @@ export const config = {
   litellm_embed_model: process.env.LITELLM_EMBED_MODEL || '',
   litellm_base: process.env.LITELLM_BASE_URL || 'http://localhost:4000',
   ollama: {
-    model: process.env.OLLAMA_MODEL || 'llama4',
-    embedModel: process.env.OLLAMA_EMBED_MODEL || '',
+    model: process.env.OLLAMA_MODEL || 'llama3.2:3b',
+    embedModel: process.env.OLLAMA_EMBED_MODEL || 'nomic-embed-text',
     baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
   },
   temp: Number(process.env.LLM_TEMP || 1),
