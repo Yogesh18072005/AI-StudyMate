@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { env } from "../config/env";
-import { chatJSON, getChatDetail, type FlashCard, createFlashcard, listFlashcards, deleteFlashcard, getChats, type ChatMessage, type SavedFlashcard, podcastStart } from "../lib/api";
+import { chatJSON, getChatDetail, type FlashCard, createFlashcard, listFlashcards, deleteFlashcard, getChats, type ChatMessage, podcastStart } from "../lib/api";
 import MarkdownView from "../components/Chat/MarkdownView";
 import ActionRow from "../components/Chat/ActionRow";
 import FlashCards from "../components/Chat/FlashCards";
