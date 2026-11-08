@@ -55,7 +55,7 @@ export default function Planner() {
         wsRef.current = connectPlannerStream(sid, (ev: PlannerEvent) => {
             if (ev.type === "plan.update") {
                 setTasks(t => t.map(x => x.id === ev.taskId ? { ...x, plan: { ...(x.plan || {}), slots: ev.slots } } : x))
-                plannerWeekly(false).then(wp => setPlan(wp.plan)).catch(() => { })
+                plannerWeekly(false).then(wp => setPlan(wp.plan)).catch(() => { /* The next refresh can recover the weekly plan. */ })
             }
             if (ev.type === "task.created") {
                 setTasks(t => [ev.task, ...t.filter(x => x.id !== ev.task.id)])
