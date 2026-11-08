@@ -1,9 +1,9 @@
+import { useEffect, useState } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
+import type { PluggableList } from "unified";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import rehypeHighlight from "rehype-highlight";
 
 type Props = { md: string };
 
@@ -47,12 +47,42 @@ const components: Components = {
 };
 
 export default function MarkdownView({ md }: Props) {
+  const needsMath = /\$\$|\\\(|\\\[/.test(md);
+  const needsHighlight = /`{3,}|<code\b/i.test(md);
+  const [rehypePlugins, setRehypePlugins] = useState<PluggableList>([]);
+
+  useEffect(() => {
+    let active = true;
+    const loadPlugins = async () => {
+      const plugins: PluggableList = [];
+      if (needsMath) {
+        const katex = await import("rehype-katex");
+        plugins.push(katex.default);
+      }
+      if (needsHighlight) {
+        const highlight = await import("rehype-highlight");
+        plugins.push(highlight.default);
+      }
+      if (active) setRehypePlugins(plugins);
+    };
+
+    if (needsMath || needsHighlight) {
+      void loadPlugins();
+    } else {
+      setRehypePlugins([]);
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [needsMath, needsHighlight]);
+
   return (
     <div className="prose prose-invert max-w-none leading-relaxed text-stone-200 w-full overflow-hidden">
       <ReactMarkdown
         skipHtml
         remarkPlugins={[remarkGfm, remarkBreaks, remarkMath]}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        rehypePlugins={rehypePlugins}
         components={components}
       >
         {md || ""}
