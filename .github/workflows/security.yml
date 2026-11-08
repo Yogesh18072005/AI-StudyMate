@@ -41,12 +41,12 @@ jobs:
     - name: Run backend security audit
       run: |
         echo "## Backend Security Audit" >> $GITHUB_STEP_SUMMARY
-        npm audit --audit-level=moderate --json | jq -r '.vulnerabilities | to_entries[] | "- \\(.key): \\(.value.severity)"' >> $GITHUB_STEP_SUMMARY || true
+        npm audit --audit-level=moderate --json | jq -r '.vulnerabilities | to_entries[] | "- \(.key): \(.value.severity)"' >> $GITHUB_STEP_SUMMARY || true
 
     - name: Run frontend security audit
       run: |
         echo "## Frontend Security Audit" >> $GITHUB_STEP_SUMMARY
-        cd frontend && pnpm audit --audit-level=moderate --json | jq -r '.advisories // .vulnerabilities // {} | to_entries[] | "- \\(.key): \\(.value.severity)"' >> $GITHUB_STEP_SUMMARY || true
+        cd frontend && pnpm audit --audit-level=moderate --json | jq -r '.advisories // .vulnerabilities // {} | to_entries[] | "- \(.key): \(.value.severity)"' >> $GITHUB_STEP_SUMMARY || true
 
     - name: Create issue for high/critical vulnerabilities
       if: failure()
@@ -99,7 +99,7 @@ jobs:
         npm outdated --json > backend_outdated.json || true
         if [ -s backend_outdated.json ]; then
           echo "## Backend Dependencies with Updates Available" >> $GITHUB_STEP_SUMMARY
-          cat backend_outdated.json | jq -r 'to_entries[] | "- \\(.key): \\(.value.current) → \\(.value.latest)"' >> $GITHUB_STEP_SUMMARY
+          cat backend_outdated.json | jq -r 'to_entries[] | "- \(.key): \(.value.current) → \(.value.latest)"' >> $GITHUB_STEP_SUMMARY
         fi
 
     - name: Check for frontend updates
@@ -109,5 +109,5 @@ jobs:
         cd ..
         if [ -s frontend_outdated.json ]; then
           echo "## Frontend Dependencies with Updates Available" >> $GITHUB_STEP_SUMMARY
-          cat frontend_outdated.json | jq -r 'to_entries[] | "- \\(.key): \\(.value.current) → \\(.value.latest)"' >> $GITHUB_STEP_SUMMARY
+          cat frontend_outdated.json | jq -r 'to_entries[] | "- \(.key): \(.value.current) → \(.value.latest)"' >> $GITHUB_STEP_SUMMARY
         fi
