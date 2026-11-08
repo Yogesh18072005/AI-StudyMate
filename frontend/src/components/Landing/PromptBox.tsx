@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 
 type Props = {
   value: string;
@@ -23,7 +23,6 @@ export default function PromptBox({
   onDragOver,
   onDrop,
 }: Props) {
-
   return (
     <div
       className="rounded-3xl bg-stone-950 border border-stone-900 shadow-[inset_0_3px_15px] shadow-stone-900 flex items-start rounded-bl-none rounded-br-none md:rounded-br-3xl"
