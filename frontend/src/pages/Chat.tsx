@@ -300,9 +300,11 @@ export default function Chat() {
     };
   }, []);
 
+  const messageCount = Array.isArray(messages) ? messages.length : 0;
+
   useEffect(() => {
     setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 0);
-  }, [Array.isArray(messages) ? messages.length : 0]);
+  }, [messageCount]);
 
   const addToBag = async (kind: BagItem["kind"], title: string, content: string) => {
     const k = keyFor(kind, title, content);
