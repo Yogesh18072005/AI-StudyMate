@@ -40,8 +40,9 @@ export default function Transcriber() {
       } else {
         setStatus(`Error: ${result.error || 'Transcription failed'}`);
       }
-    } catch (error: any) {
-      setStatus(`Error: ${error.message || 'Failed to transcribe audio'}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to transcribe audio';
+      setStatus(`Error: ${message}`);
     } finally {
       setBusy(false);
       setProcessing(false);
@@ -116,7 +117,7 @@ export default function Transcriber() {
       mediaRecorder.start();
       setRecording(true);
       setStatus("Listening...");
-    } catch (error) {
+    } catch {
       setStatus("Error: Could not access microphone");
       setShowSiriUI(false);
     }
