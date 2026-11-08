@@ -42,7 +42,10 @@ function pick(p: string) {
 
 export function makeModels(): Pair {
   const llmProvider = pick(config.provider)
-  const embeddingProvider = pick(config.embeddings_provider || config.provider)
+  const embeddingProvider =
+    config.provider === 'litellm' && config.litellm_embed_model
+      ? litellm
+      : pick(config.embeddings_provider || config.provider)
 
   const llm = llmProvider.makeLLM(config)
   const embeddings = embeddingProvider.makeEmbeddings(config)
