@@ -72,11 +72,11 @@ function normalizePayload(payload: unknown): { md: string; flashcards: FlashCard
     const loosePayload = parseLooseStructuredPayload(s);
     if (loosePayload) return loosePayload;
     if (s.startsWith("{") && s.endsWith("}")) {
-      try { const obj = JSON.parse(s); return { md: String(obj?.answer || ""), flashcards: Array.isArray(obj?.flashcards) ? obj.flashcards : [], topic: typeof obj?.topic === "string" ? obj.topic : undefined }; } catch { }
+      try { const obj = JSON.parse(s); return { md: String(obj?.answer || ""), flashcards: Array.isArray(obj?.flashcards) ? obj.flashcards : [], topic: typeof obj?.topic === "string" ? obj.topic : undefined }; } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ }
     }
     const inner = extractFirstJsonObject(s);
     if (inner) {
-      try { const obj = JSON.parse(inner); return { md: String(obj?.answer || ""), flashcards: Array.isArray(obj?.flashcards) ? obj.flashcards : [], topic: typeof obj?.topic === "string" ? obj.topic : undefined }; } catch { }
+      try { const obj = JSON.parse(inner); return { md: String(obj?.answer || ""), flashcards: Array.isArray(obj?.flashcards) ? obj.flashcards : [], topic: typeof obj?.topic === "string" ? obj.topic : undefined }; } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ }
     }
     return { md: s, flashcards: [] };
   }
@@ -272,9 +272,9 @@ export default function Chat() {
             { role: "assistant", content: `I couldn't complete that answer: ${message}`, at: Date.now() }
           ]));
         }
-      } catch { }
+      } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ }
     };
-    return () => { try { ws.close(); } catch { } wsRef.current = null; };
+    return () => { try { ws.close(); } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ } wsRef.current = null; };
   }, [chatId]);
 
   useEffect(() => {
@@ -330,7 +330,7 @@ export default function Chat() {
       const res = await listFlashcards();
       const items = res.flashcards || [];
       await Promise.all(items.map((c) => deleteFlashcard(c.id).catch(() => { /* Continue clearing the remaining saved cards. */ })));
-    } catch { }
+    } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ }
     setBag([]);
     seenRef.current.clear();
   };
@@ -349,7 +349,7 @@ export default function Chat() {
         const s = new Set<string>();
         for (const it of items) s.add(keyFor(it.kind, it.title, it.content));
         seenRef.current = s;
-      } catch { }
+      } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ }
     })();
   }, []);
 
