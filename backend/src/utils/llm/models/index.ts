@@ -41,16 +41,11 @@ function pick(p: string) {
 }
 
 export function makeModels(): Pair {
-  const mod = pick(config.provider)
-  const llm = mod.makeLLM(config)
+  const llmProvider = pick(config.provider)
+  const embeddingProvider = pick(config.embeddings_provider || config.provider)
 
-  let embeddings: EmbeddingsLike
-  try {
-    embeddings = mod.makeEmbeddings(config)
-  } catch {
-    const d = pick(config.embeddings_provider || 'openai')
-    embeddings = d.makeEmbeddings(config)
-  }
+  const llm = llmProvider.makeLLM(config)
+  const embeddings = embeddingProvider.makeEmbeddings(config)
 
   return { llm, embeddings }
 }
