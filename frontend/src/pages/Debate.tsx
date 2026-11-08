@@ -52,6 +52,7 @@ export default function Debate() {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
+    const connectWebSocketRef = useRef<(id: string) => void>(() => {});
     const analysisWsRef = useRef<WebSocket | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,7 +69,7 @@ export default function Debate() {
     useEffect(() => {
         if (debateId) {
             fetchDebateSession(debateId);
-            connectWebSocket(debateId);
+            connectWebSocketRef.current(debateId);
         }
         return () => {
             if (wsRef.current) {
@@ -166,6 +167,7 @@ export default function Debate() {
 
         wsRef.current = ws;
     };
+    connectWebSocketRef.current = connectWebSocket;
 
     const startDebate = async () => {
         if (!topic.trim()) return;
