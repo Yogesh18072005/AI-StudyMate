@@ -8,7 +8,7 @@ export default function LoadingIndicator({
           <span className="absolute inset-0 rounded-full border-2 border-stone-700 animate-ping" />
           <span className="absolute inset-0 rounded-full border-2 border-stone-500" />
         </div>
-        <div className="text-stone-300">{label}</div>
+        <div className="min-w-0 whitespace-nowrap text-stone-300">{label}</div>
       </div>
 
       <div className="mt-4 space-y-2">
