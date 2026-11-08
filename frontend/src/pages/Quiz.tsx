@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams, Link } from "react-router-dom";
 import { quizStart, connectQuizStream, type QuizEvent } from "../lib/api";
 import LoadingIndicator from "../components/Chat/LoadingIndicator";
@@ -50,7 +50,7 @@ export default function Quiz() {
   const resultVisual = useMemo(() => { if (percentage >= 90) return { msg: "Excellent! You have mastered this topic!", cls: "bg-green-900/20 border border-green-700 text-green-200", icon: "🏆" }; if (percentage >= 70) return { msg: "Great job! You have a solid understanding.", cls: "bg-blue-900/20 border border-blue-700 text-blue-200", icon: "🎉" }; if (percentage >= 50) return { msg: "Good effort! Review the concepts and try again.", cls: "bg-yellow-900/20 border border-yellow-700 text-yellow-200", icon: "📚" }; return { msg: "Keep studying! Practice makes perfect.", cls: "bg-red-900/20 border border-red-700 text-red-200", icon: "💪" }; }, [percentage]);
 
   useEffect(() => () => { if (closeRef.current) closeRef.current(); }, []);
-  useEffect(() => { if (!initialTopic) return; start(initialTopic); }, [initialTopic]);
+  useEffect(() => { if (!initialTopic) return; start(initialTopic); }, [initialTopic, start]);
 
   function resetQuestionState() {
     setIdx(0);
@@ -59,7 +59,7 @@ export default function Quiz() {
     setShowExp(false);
   }
 
-  async function start(t: string) {
+  const start = useCallback(async (t: string) => {
     const trimmed = t.trim();
     if (!trimmed) return;
     if (closeRef.current) closeRef.current();
@@ -98,7 +98,7 @@ export default function Quiz() {
     } catch {
       setConnecting(false);
     }
-  }
+  }, [navigate, search]);
 
   const onSelect = (i: number) => { if (!showExp) setSelected(i); };
 
