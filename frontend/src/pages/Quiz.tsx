@@ -11,18 +11,21 @@ import ReviewModal from "../components/Quiz/ReviewModal";
 export type Question = { id: number; question: string; options: string[]; correct: number; hint: string; explanation: string; imageHtml?: string };
 export type UA = { questionId: number; selectedAnswer: number; correct: boolean; question: string; selectedOption: string; correctOption: string; explanation: string };
 
-function takeQuizArray(a: unknown): Question[] {
-  if (Array.isArray(a)) return a as Question[];
-  if (Array.isArray((a as any)?.quiz)) return (a as any).quiz as Question[];
+function takeQuizArray(value: unknown): Question[] {
+  if (Array.isArray(value)) return value as Question[];
+  if (typeof value === "object" && value !== null && "quiz" in value && Array.isArray(value.quiz)) {
+    return value.quiz as Question[];
+  }
   return [];
 }
 
 export default function Quiz() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation() as any;
+  const location = useLocation();
+  const routeState = location.state as { topic?: string } | null;
 
-  const passedTopic = (location?.state && location.state.topic) || "";
+  const passedTopic = routeState?.topic || "";
   const initialTopic = search.get("topic") || passedTopic || "";
 
   const [topic, setTopic] = useState(initialTopic);
