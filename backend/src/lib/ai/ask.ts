@@ -39,6 +39,42 @@ function tryParse<T = unknown>(s: string): T | null {
   try { return JSON.parse(s) as T } catch { return null }
 }
 
+function parseLooseModelPayload(s: string): { topic?: string; answer: string; flashcards: AskCard[] } | null {
+  // Some local models return YAML block syntax inside an otherwise JSON-like wrapper.
+  const answerMatch = /["']answer["']\\s*:\\s*\\|/.exec(s)
+  if (!answerMatch || answerMatch.index === undefined) return null
+
+  const topicMatch = /["']topic["']\\s*:\\s*["']([^"']*)["']/.exec(s)
+  let answerText = s.slice(answerMatch.index + answerMatch[0].length)
+  let flashcards: AskCard[] = []
+
+  const cardsMatch = /["']flashcards["']\\s*:/.exec(answerText)
+  if (cardsMatch && cardsMatch.index !== undefined) {
+    const cardsText = answerText.slice(cardsMatch.index + cardsMatch[0].length).trim()
+    const arrayMatch = cardsText.match(/^(\\[[\\s\\S]*?\\])/)
+    if (arrayMatch) {
+      const parsedCards = tryParse<AskCard[]>(arrayMatch[1])
+      if (Array.isArray(parsedCards)) flashcards = parsedCards
+    }
+    answerText = answerText.slice(0, cardsMatch.index)
+  }
+
+  answerText = answerText
+    .replace(/\\r/g, "")
+    .replace(/^\\s*\\n/, "")
+    .replace(/\\n?\\s*`{3,}\\s*$/g, "")
+    .replace(/\\n?\\s*\\\\?\\s*}\\s*$/g, "")
+
+  const lines = answerText.split("\\n")
+  const nonEmpty = lines.filter(line => line.trim().length > 0)
+  const indent = nonEmpty.length
+    ? Math.min(...nonEmpty.map(line => line.match(/^\\s*/)?.[0].length || 0))
+    : 0
+  const answer = lines.map(line => line.slice(Math.min(indent, line.length))).join("\\n").trim()
+
+  return { topic: topicMatch?.[1], answer, flashcards }
+}
+
 export const BASE_SYSTEM_PROMPT = `
 You are AI-StudyMate, a clear and accurate study assistant.
 
@@ -130,6 +166,7 @@ export async function askWithContext(opts: AskWithContextOptions): Promise<AskPa
   const draft = toText(res).trim()
   const jsonStr = extractFirstJsonObject(draft) || draft
   const parsed = tryParse<any>(jsonStr)
+  const looseParsed = parsed ? null : parseLooseModelPayload(draft)
 
   const out: AskPayload =
     parsed && typeof parsed === "object"
@@ -138,7 +175,13 @@ export async function askWithContext(opts: AskWithContextOptions): Promise<AskPa
         answer: typeof parsed.answer === "string" ? parsed.answer : "",
         flashcards: Array.isArray(parsed.flashcards) ? (parsed.flashcards as AskCard[]) : [],
       }
-      : { topic, answer: draft, flashcards: [] }
+      : looseParsed
+        ? {
+          topic: looseParsed.topic || topic,
+          answer: looseParsed.answer,
+          flashcards: looseParsed.flashcards,
+        }
+        : { topic, answer: draft, flashcards: [] }
 
   writeCache(ck, out)
   return out
