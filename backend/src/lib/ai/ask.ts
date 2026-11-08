@@ -40,18 +40,18 @@ function tryParse<T = unknown>(s: string): T | null {
 }
 
 function parseLooseModelPayload(s: string): { topic?: string; answer: string; flashcards: AskCard[] } | null {
-  // Some local models return YAML block syntax inside an otherwise JSON-like wrapper.
-  const answerMatch = /["']answer["']\\s*:\\s*\\|/.exec(s)
+  // Recover YAML-style block answers returned inside a JSON-like wrapper.
+  const answerMatch = /["']answer["']\s*:\s*\|/.exec(s)
   if (!answerMatch || answerMatch.index === undefined) return null
 
-  const topicMatch = /["']topic["']\\s*:\\s*["']([^"']*)["']/.exec(s)
+  const topicMatch = /["']topic["']\s*:\s*["']([^"']*)["']/.exec(s)
   let answerText = s.slice(answerMatch.index + answerMatch[0].length)
   let flashcards: AskCard[] = []
 
-  const cardsMatch = /["']flashcards["']\\s*:/.exec(answerText)
+  const cardsMatch = /["']flashcards["']\s*:/.exec(answerText)
   if (cardsMatch && cardsMatch.index !== undefined) {
     const cardsText = answerText.slice(cardsMatch.index + cardsMatch[0].length).trim()
-    const arrayMatch = cardsText.match(/^(\\[[\\s\\S]*?\\])/)
+    const arrayMatch = cardsText.match(/^(\[[\s\S]*?\])/)
     if (arrayMatch) {
       const parsedCards = tryParse<AskCard[]>(arrayMatch[1])
       if (Array.isArray(parsedCards)) flashcards = parsedCards
@@ -60,17 +60,17 @@ function parseLooseModelPayload(s: string): { topic?: string; answer: string; fl
   }
 
   answerText = answerText
-    .replace(/\\r/g, "")
-    .replace(/^\\s*\\n/, "")
-    .replace(/\\n?\\s*`{3,}\\s*$/g, "")
-    .replace(/\\n?\\s*\\\\?\\s*}\\s*$/g, "")
+    .replace(/\r/g, "")
+    .replace(/^\s*\n/, "")
+    .replace(/\n?\s*[\x60]{3,}\s*$/g, "")
+    .replace(/\n?\s*\\?\s*},?\s*$/g, "")
 
-  const lines = answerText.split("\\n")
+  const lines = answerText.split("\n")
   const nonEmpty = lines.filter(line => line.trim().length > 0)
   const indent = nonEmpty.length
-    ? Math.min(...nonEmpty.map(line => line.match(/^\\s*/)?.[0].length || 0))
+    ? Math.min(...nonEmpty.map(line => line.match(/^\s*/)?.[0].length || 0))
     : 0
-  const answer = lines.map(line => line.slice(Math.min(indent, line.length))).join("\\n").trim()
+  const answer = lines.map(line => line.slice(Math.min(indent, line.length))).join("\n").trim()
 
   return { topic: topicMatch?.[1], answer, flashcards }
 }
