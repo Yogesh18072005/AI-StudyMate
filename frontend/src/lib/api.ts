@@ -243,7 +243,7 @@ export async function deleteFlashcard(id: string) {
 }
 
 export async function getExams() {
-  return req<{ ok: true; exams: { id: string; name: string; sections: any[] }[] }>(
+  return req<{ ok: true; exams: { id: string; name: string; sections: unknown[] }[] }>(
     `${env.backend}/exams`,
     { method: "GET" }
   )
@@ -344,7 +344,7 @@ export function connectQuizStream(quizId: string, onEvent: (ev: QuizEvent) => vo
     try {
       onEvent(JSON.parse(m.data as string) as QuizEvent)
     } catch { /* Ignore malformed or already-closed stream events. */ }
-  }; ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any); return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
+  }; ws.onerror = () => onEvent({ type: "error", error: "stream_error" }); return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
 }
 
 export async function transcribeAudio(file: File) {
