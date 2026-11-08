@@ -24,9 +24,41 @@ function extractFirstJsonObject(s: string): string {
   return "";
 }
 
+function parseLooseStructuredPayload(s: string): { md: string; flashcards: FlashCard[]; topic?: string } | null {
+  // Some local models return JSON-like output with a YAML block marker:
+  // "answer": |\n  ...answer...\n"flashcards": []
+  const answerMatch = s.match(/["']answer["']\\s*:\\s*\\|\\s*([\\s\\S]*?)\\s*["']flashcards["']\\s*:/);
+  if (!answerMatch) return null;
+
+  const topicMatch = s.match(/["']topic["']\\s*:\\s*["']([^"']*)["']/);
+  const answerLines = answerMatch[1].replace(/\\r/g, "").split("\\n");
+  const nonEmptyLines = answerLines.filter((line) => line.trim().length > 0);
+  const commonIndent = nonEmptyLines.length
+    ? Math.min(...nonEmptyLines.map((line) => line.match(/^\\s*/)?.[0].length || 0))
+    : 0;
+  const md = answerLines.map((line) => line.slice(Math.min(commonIndent, line.length))).join("\\n").trim();
+
+  const flashcardsMatch = s.match(/["']flashcards["']\\s*:\\s*(\\[[\\s\\S]*?\\])/);
+  let flashcards: FlashCard[] = [];
+  if (flashcardsMatch) {
+    try {
+      const parsed = JSON.parse(flashcardsMatch[1]);
+      if (Array.isArray(parsed)) flashcards = parsed;
+    } catch { }
+  }
+
+  return {
+    md,
+    flashcards,
+    topic: topicMatch?.[1],
+  };
+}
+
 function normalizePayload(payload: unknown): { md: string; flashcards: FlashCard[]; topic?: string } {
   if (typeof payload === "string") {
     const s = payload.trim();
+    const loosePayload = parseLooseStructuredPayload(s);
+    if (loosePayload) return loosePayload;
     if (s.startsWith("{") && s.endsWith("}")) {
       try { const obj = JSON.parse(s); return { md: String(obj?.answer || ""), flashcards: Array.isArray(obj?.flashcards) ? obj.flashcards : [], topic: typeof obj?.topic === "string" ? obj.topic : undefined }; } catch { }
     }
