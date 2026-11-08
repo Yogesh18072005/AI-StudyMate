@@ -28,6 +28,10 @@ type DebateAnalysis = {
     overallAssessment: string;
 };
 
+function getErrorMessage(error: unknown, fallback: string) {
+    return error instanceof Error ? error.message : fallback;
+}
+
 export default function Debate() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -86,8 +90,8 @@ export default function Debate() {
             } else {
                 setError(data.error || "Failed to load debate session");
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to load debate session");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to load debate session"));
         }
     };
 
@@ -182,8 +186,8 @@ export default function Debate() {
             } else {
                 setError(data.error || "Failed to start debate");
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to start debate");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to start debate"));
         }
     };
 
@@ -211,8 +215,8 @@ export default function Debate() {
             if (!data.ok) {
                 setError(data.error || "Failed to submit argument");
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to submit argument");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to submit argument"));
         }
     };
 
@@ -250,8 +254,8 @@ export default function Debate() {
             } else {
                 setError(data.error || "Failed to surrender");
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to surrender");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to surrender"));
         }
     };
 
@@ -327,8 +331,8 @@ export default function Debate() {
                 setAnalysisPhase("");
                 analysisWs.close();
             }
-        } catch (err: any) {
-            setError(err.message || "Failed to start analysis");
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, "Failed to start analysis"));
             setIsAnalyzing(false);
             setAnalysisPhase("");
             analysisWs.close();
