@@ -1,5 +1,4 @@
-import { useState, useEffect } from "react"
-import { plannerList, type PlannerTask, type PlannerSlot } from "../../lib/api"
+import { type PlannerTask } from "../../lib/api"
 
 function fmtTime(ts: number) {
     const d = new Date(ts)
@@ -15,7 +14,6 @@ interface TodayFocusProps {
 export default function TodayFocus({ tasks, onStartSession, onCompleteTask }: TodayFocusProps) {
     const today = new Date().toISOString().slice(0, 10)
 
-    // Get today's tasks and upcoming urgent tasks
     const todayTasks = tasks.filter(t => {
         const taskDate = new Date(t.dueAt).toISOString().slice(0, 10)
         return taskDate === today && t.status !== 'done'
@@ -36,7 +34,6 @@ export default function TodayFocus({ tasks, onStartSession, onCompleteTask }: To
             </div>
 
             <div className="space-y-4">
-                {/* Active Sessions */}
                 {activeTasks.length > 0 && (
                     <div>
                         <div className="text-zinc-300 text-sm mb-2">Currently Working On:</div>
@@ -63,7 +60,6 @@ export default function TodayFocus({ tasks, onStartSession, onCompleteTask }: To
                     </div>
                 )}
 
-                {/* Due Today */}
                 {todayTasks.length > 0 && (
                     <div>
                         <div className="text-zinc-300 text-sm mb-2">Due Today ({todayTasks.length}):</div>
@@ -95,7 +91,6 @@ export default function TodayFocus({ tasks, onStartSession, onCompleteTask }: To
                     </div>
                 )}
 
-                {/* Urgent (Next 24h) */}
                 {urgentTasks.length > 0 && (
                     <div>
                         <div className="text-zinc-300 text-sm mb-2">Urgent (Next 24h):</div>
@@ -125,7 +120,6 @@ export default function TodayFocus({ tasks, onStartSession, onCompleteTask }: To
                     </div>
                 )}
 
-                {/* Empty State */}
                 {todayTasks.length === 0 && urgentTasks.length === 0 && activeTasks.length === 0 && (
                     <div className="text-center py-8 text-zinc-400">
                         <div className="text-2xl mb-2">🎉</div>
