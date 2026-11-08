@@ -35,13 +35,13 @@ export default function Planner() {
     const [tasks, setTasks] = useState<PlannerTask[]>([])
     const [sid] = useState(() => Math.random().toString(36).slice(2, 10))
     const [plan, setPlan] = useState<WeeklyPlan | null>(null)
-    const [materials, setMaterials] = useState<Record<string, any>>({})
-    const [loadingStates, setLoadingStates] = useState<Record<string, { plan?: boolean; summary?: boolean; flashcards?: boolean }>>({})
+    type MaterialEntry = { summary?: string | { answer?: string }; flashcards?: { flashcards?: Array<{ q: string; a: string }> }; [key: string]: unknown }
+    const [materials, setMaterials] = useState<Record<string, MaterialEntry> & { _chunks?: PlannerEvent[] }>({})
+    const [, setLoadingStates] = useState<Record<string, { plan?: boolean; summary?: boolean; flashcards?: boolean }>>({})
     const wsRef = useRef<ReturnType<typeof connectPlannerStream> | null>(null)
     const [view, setView] = useState<"today" | "list" | "mindmap">("today")
     const [selectedFiles, setSelectedFiles] = useState<File[]>([])
     const [notifications, setNotifications] = useState<Array<{ id: string; type: string; message: string; at: number }>>([])
-    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const taskIndex = useMemo(() => Object.fromEntries(tasks.map(t => [t.id, t])), [tasks])
     const slotsByTask = useMemo(() => {
@@ -51,28 +51,10 @@ export default function Planner() {
         return m
     }, [plan])
 
-    const suggestions = useMemo(() => {
-        const now = Date.now()
-        type Sug = { task: PlannerTask; score: number; nextSlot?: PlannerSlot }
-        const out: Sug[] = []
-        for (const t of tasks) {
-            if (t.status === "done") continue
-            const hoursLeft = Math.max(0.1, (t.dueAt - now) / 3600000)
-            const planned = slotsByTask[t.id]?.length || 0
-            const nextSlot = (slotsByTask[t.id] || []).find(s => s.start >= now) || (slotsByTask[t.id] || [])[0]
-            let score = (t.priority || 3) * (1 / hoursLeft) + (t.estMins || 60) * 0.002
-            if (!planned) score += 0.5
-            if (t.status === "blocked") score -= 2
-            if (t.status === "doing") score += 0.2
-            out.push({ task: t, score, nextSlot })
-        }
-        return out.sort((a, b) => b.score - a.score).slice(0, 3)
-    }, [tasks, slotsByTask])
-
     useEffect(() => {
         wsRef.current = connectPlannerStream(sid, (ev: PlannerEvent) => {
             if (ev.type === "plan.update") {
-                setTasks(t => t.map(x => x.id === ev.taskId ? { ...x, plan: { ...(x as any).plan, slots: ev.slots } } as any : x))
+                setTasks(t => t.map(x => x.id === ev.taskId ? { ...x, plan: { ...(x.plan || {}), slots: ev.slots } } : x))
                 plannerWeekly(false).then(wp => setPlan(wp.plan)).catch(() => { })
             }
             if (ev.type === "task.created") {
@@ -117,9 +99,9 @@ export default function Planner() {
             if (ev.type === "materials.chunk") {
                 setMaterials(m => ({ ...m, _chunks: [...(m._chunks || []), ev] }))
             }
-            if (ev.type === "materials.done") { }
+            if (ev.type === "materials.done") { /* Completion is reflected by the request response. */ }
         })
-        return () => { try { wsRef.current?.close() } catch { } }
+        return () => { try { wsRef.current?.close() } catch { /* The stream may already be closed. */ } }
     }, [sid])
 
     const addNotification = (type: string, message: string) => {
@@ -172,19 +154,6 @@ export default function Planner() {
         }
     }
 
-    const handleFileSelect = (files: FileList | null) => {
-        if (!files) return
-        const newFiles = Array.from(files).filter(f =>
-            f.size <= 10 * 1024 * 1024 && // 10MB limit
-            (f.type.includes('pdf') || f.type.includes('image') || f.type.includes('text') || f.type.includes('document'))
-        )
-        setSelectedFiles(prev => [...prev, ...newFiles])
-    }
-
-    const removeFile = (index: number) => {
-        setSelectedFiles(prev => prev.filter((_, i) => i !== index))
-    }
-
     const planTask = async (id: string) => {
         setLoadingStates(prev => ({ ...prev, [id]: { ...prev[id], plan: true } }))
         try {
@@ -192,13 +161,13 @@ export default function Planner() {
             const result = await plannerPlan(id, false)
             console.log('Plan result:', result)
             const { task } = result
-            setTasks(t => t.map(x => x.id === id ? task as any : x))
+            setTasks(t => t.map(x => x.id === id ? task : x))
             const wp = await plannerWeekly(false)
             setPlan(wp.plan)
             addNotification("success", "Task planned successfully")
         } catch (error) {
             console.error('Plan task error:', error)
-            addNotification("error", "Failed to plan task: " + (error as any)?.message)
+            addNotification("error", "Failed to plan task: " + (error instanceof Error ? error.message : "Unknown error"))
         } finally {
             setLoadingStates(prev => ({ ...prev, [id]: { ...prev[id], plan: false } }))
         }
@@ -218,7 +187,7 @@ export default function Planner() {
         try {
             await plannerUploadFiles(id, [file])
             // Files will be updated via WebSocket event
-        } catch (e) {
+        } catch {
             addNotification("error", "Failed to upload file")
         }
     }
@@ -227,7 +196,7 @@ export default function Planner() {
         try {
             await plannerDeleteFile(taskId, fileId)
             // File removal will be updated via WebSocket event
-        } catch (e) {
+        } catch {
             addNotification("error", "Failed to delete file")
         }
     }
@@ -251,18 +220,6 @@ export default function Planner() {
     const updateNotes = async (id: string, notes: string) => {
         const { task } = await plannerUpdate(id, { notes })
         setTasks(t => t.map(x => x.id === id ? task : x))
-    }
-
-    const fmtRel = (ts: number) => {
-        const d = ts - Date.now()
-        const sign = d < 0 ? "ago" : "in"
-        const v = Math.abs(d)
-        const h = Math.round(v / 3600000)
-        if (h < 1) {
-            const m = Math.max(1, Math.round(v / 60000))
-            return `${sign} ${m}m`
-        }
-        return `${sign} ${h}h`
     }
 
     return (
@@ -336,7 +293,7 @@ export default function Planner() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <select value={t.status} onChange={e => mark(t.id, e.target.value as any)} className="bg-stone-900 border border-zinc-800 text-stone-200 text-xs rounded px-2 py-1">
+                                        <select value={t.status} onChange={e => mark(t.id, e.target.value as PlannerTask["status"])} className="bg-stone-900 border border-zinc-800 text-stone-200 text-xs rounded px-2 py-1">
                                             <option value="todo">todo</option>
                                             <option value="doing">doing</option>
                                             <option value="done">done</option>
@@ -374,7 +331,7 @@ export default function Planner() {
                                 )}
                                 {Array.isArray(materials[t.id]?.flashcards?.flashcards) && (
                                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {materials[t.id].flashcards.flashcards.map((c: any, i: number) => (
+                                        {materials[t.id].flashcards.flashcards.map((c, i) => (
                                             <div key={i} className="border border-zinc-800 rounded-lg p-2">
                                                 <div className="text-zinc-200 text-sm font-medium">Q: {c.q}</div>
                                                 <div className="text-zinc-400 text-sm">A: {c.a}</div>
