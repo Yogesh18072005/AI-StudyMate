@@ -97,8 +97,8 @@ export default function CompanionDock() {
         topic: payload?.topic
       }
       setMessages(prev => [...prev, assistantMessage])
-    } catch (err: any) {
-      const msg = err?.message || "Failed to contact companion"
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to contact companion"
       setError(msg)
       setMessages(prev => prev.slice(0, -1))
     } finally {
