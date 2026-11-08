@@ -50,7 +50,6 @@ export default function Quiz() {
   const resultVisual = useMemo(() => { if (percentage >= 90) return { msg: "Excellent! You have mastered this topic!", cls: "bg-green-900/20 border border-green-700 text-green-200", icon: "🏆" }; if (percentage >= 70) return { msg: "Great job! You have a solid understanding.", cls: "bg-blue-900/20 border border-blue-700 text-blue-200", icon: "🎉" }; if (percentage >= 50) return { msg: "Good effort! Review the concepts and try again.", cls: "bg-yellow-900/20 border border-yellow-700 text-yellow-200", icon: "📚" }; return { msg: "Keep studying! Practice makes perfect.", cls: "bg-red-900/20 border border-red-700 text-red-200", icon: "💪" }; }, [percentage]);
 
   useEffect(() => () => { if (closeRef.current) closeRef.current(); }, []);
-  useEffect(() => { if (!initialTopic) return; start(initialTopic); }, [initialTopic, start]);
 
   function resetQuestionState() {
     setIdx(0);
@@ -99,6 +98,8 @@ export default function Quiz() {
       setConnecting(false);
     }
   }, [navigate, search]);
+
+  useEffect(() => { if (!initialTopic) return; start(initialTopic); }, [initialTopic, start]);
 
   const onSelect = (i: number) => { if (!showExp) setSelected(i); };
 
