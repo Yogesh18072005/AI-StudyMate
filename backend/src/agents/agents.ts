@@ -36,4 +36,4 @@ const podcaster: Agent = reg({
   tools: [nopTool, podcastScriptTool, podcastTtsTool],
 })
 
-export const Agents = { tutor, researcher, examiner }
+export const Agents = { tutor, researcher, examiner, podcaster }
