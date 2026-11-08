@@ -7,6 +7,8 @@ export const makeLLM: MkLLM = (cfg: any) => {
     model: cfg.ollama?.model || 'llama3',
     baseUrl: cfg.ollama?.baseUrl || 'http://localhost:11434',
     temperature: cfg.temp ?? 0.7,
+    // Ollama's default output limit is small; allow complete study answers.
+    numPredict: Number(process.env.OLLAMA_NUM_PREDICT || 2048),
   })
   return wrapChat(m)
 }
