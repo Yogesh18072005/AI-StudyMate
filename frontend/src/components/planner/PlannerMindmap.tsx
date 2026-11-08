@@ -126,7 +126,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
         } catch { /* Best-effort storage and simulation cleanup. */ }
     }, [])
     useEffect(() => {
-        try { localStorage.setItem("planner.customNodes", JSON.stringify(customNodes)) } catch { }
+        try { localStorage.setItem("planner.customNodes", JSON.stringify(customNodes)) } catch { /* Best-effort storage and simulation cleanup. */ }
     }, [customNodes])
 
     // Load cached AI steps and fetch if missing
@@ -138,7 +138,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
                 if (raw) m[t.id] = JSON.parse(raw)
             }
             if (Object.keys(m).length) setAiSteps(s => ({ ...s, ...m }))
-        } catch { }
+        } catch { /* Best-effort storage and simulation cleanup. */ }
     }, [tasks.length])
     useEffect(() => {
         let cancelled = false
@@ -157,9 +157,9 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
                         if (labels.length === 0 && Array.isArray(data.questions)) labels.push(...data.questions.filter((value): value is string => typeof value === "string"))
                         const uniq = Array.from(new Set(labels.map(x => String(x).trim()).filter(Boolean))).slice(0, 6)
                         if (uniq.length) {
-                            setAiSteps(s => { const next = { ...s, [t.id]: uniq }; try { localStorage.setItem(`planner.aiSteps.${t.id}`, JSON.stringify(uniq)) } catch { }; return next })
+                            setAiSteps(s => { const next = { ...s, [t.id]: uniq }; try { localStorage.setItem(`planner.aiSteps.${t.id}`, JSON.stringify(uniq)) } catch { /* Best-effort storage and simulation cleanup. */ }; return next })
                         }
-                    } catch { }
+                    } catch { /* Best-effort storage and simulation cleanup. */ }
                 }
             })()
         return () => { cancelled = true }
@@ -191,7 +191,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
     }, [tasks, positions, aiSteps])
 
     useEffect(() => {
-        for (const id of Object.keys(simsRef.current)) { try { simsRef.current[id].stop() } catch { } }
+        for (const id of Object.keys(simsRef.current)) { try { simsRef.current[id].stop() } catch { /* Best-effort storage and simulation cleanup. */ } }
         simsRef.current = {}
         const nm: Record<string, MindmapNode> = {}
         for (const t of tasks) {
@@ -229,7 +229,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             simsRef.current[t.id] = sim
         }
         nodeMapRef.current = nm
-        return () => { for (const id of Object.keys(simsRef.current)) { try { simsRef.current[id].stop() } catch { } } }
+        return () => { for (const id of Object.keys(simsRef.current)) { try { simsRef.current[id].stop() } catch { /* Best-effort storage and simulation cleanup. */ } } }
     }, [tasks, positions, aiSteps])
 
     function recenterSteps(taskId: string) {
@@ -259,11 +259,11 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
         try {
             const raw = localStorage.getItem("planner.stepPos")
             if (raw) setStepPos(JSON.parse(raw))
-        } catch { }
+        } catch { /* Best-effort storage and simulation cleanup. */ }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
     useEffect(() => {
-        try { localStorage.setItem("planner.stepPos", JSON.stringify(stepPos)) } catch { }
+        try { localStorage.setItem("planner.stepPos", JSON.stringify(stepPos)) } catch { /* Best-effort storage and simulation cleanup. */ }
     }, [stepPos])
 
     const onDown = (e: React.PointerEvent, id: string) => {
@@ -606,7 +606,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
                                                     const labels = (s[t.id] && Array.isArray(s[t.id])) ? s[t.id].slice() : (aiSteps[t.id]?.slice() || inferSteps(t).map(x => x.label))
                                                     const nextLabels = labels.filter(l => l !== label)
                                                     const next = { ...s, [t.id]: nextLabels }
-                                                    try { localStorage.setItem(`planner.aiSteps.${t.id}`, JSON.stringify(nextLabels)) } catch { }
+                                                    try { localStorage.setItem(`planner.aiSteps.${t.id}`, JSON.stringify(nextLabels)) } catch { /* Best-effort storage and simulation cleanup. */ }
                                                     return next
                                                 })
                                                 setStepPos(sp => {
