@@ -89,7 +89,8 @@ export default function PromptRail({ onSend }: { onSend?: (prompt: string) => vo
       navigate(`/chat?chatId=${encodeURIComponent(cid)}&q=${encodeURIComponent(q)}`, {
         state: { chatId: cid, q },
       });
-    } catch {
+    } catch (error) {
+      console.error("Unable to start the suggested prompt:", error);
     } finally {
       setBusy(false);
     }
