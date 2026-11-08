@@ -134,16 +134,17 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
     }, [customNodes])
 
     // Load cached AI steps and fetch if missing
+    const taskIds = tasks.map(task => task.id).join("\u0000")
     useEffect(() => {
         try {
             const m: Record<string, string[]> = {}
-            for (const t of tasks) {
-                const raw = localStorage.getItem(`planner.aiSteps.${t.id}`)
-                if (raw) m[t.id] = JSON.parse(raw)
+            for (const taskId of taskIds.split("\u0000").filter(Boolean)) {
+                const raw = localStorage.getItem(`planner.aiSteps.${taskId}`)
+                if (raw) m[taskId] = JSON.parse(raw)
             }
             if (Object.keys(m).length) setAiSteps(s => ({ ...s, ...m }))
         } catch { /* Best-effort storage and simulation cleanup. */ }
-    }, [tasks])
+    }, [taskIds])
     useEffect(() => {
         let cancelled = false
             ; (async () => {
