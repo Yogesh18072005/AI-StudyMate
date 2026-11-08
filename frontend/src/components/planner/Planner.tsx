@@ -54,7 +54,6 @@ export default function Planner() {
     useEffect(() => {
         wsRef.current = connectPlannerStream(sid, (ev: PlannerEvent) => {
             if (ev.type === "plan.update") {
-                setTasks(t => t.map(x => x.id === ev.taskId ? { ...x, plan: { ...(x.plan || {}), slots: ev.slots } } : x))
                 plannerWeekly(false).then(wp => setPlan(wp.plan)).catch(() => { /* The next refresh can recover the weekly plan. */ })
             }
             if (ev.type === "task.created") {
@@ -327,7 +326,7 @@ export default function Planner() {
                                 )}
 
                                 {materials[t.id]?.summary && (
-                                    <div className="mt-3 text-sm text-zinc-200 whitespace-pre-wrap">{materials[t.id].summary.answer || materials[t.id].summary}</div>
+                                    <div className="mt-3 text-sm text-zinc-200 whitespace-pre-wrap">{typeof materials[t.id].summary === "string" ? materials[t.id].summary : materials[t.id].summary?.answer}</div>
                                 )}
                                 {Array.isArray(materials[t.id]?.flashcards?.flashcards) && (
                                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
