@@ -162,6 +162,7 @@ export default function Chat() {
       try {
         const m = JSON.parse(ev.data);
         if (m?.type === "answer") {
+          if (answerReceivedRef.current) return;
           answerReceivedRef.current = true;
           const norm = normalizePayload(m.answer);
           setMessages((prev) => ([...(Array.isArray(prev) ? prev : []), { role: "assistant", content: norm.md, at: Date.now() }]));
