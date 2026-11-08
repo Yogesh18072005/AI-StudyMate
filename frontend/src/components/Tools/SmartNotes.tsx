@@ -21,8 +21,8 @@ export default function SmartNotes() {
         if (ev.type === "done") { setStatus("Done"); close(); setBusy(false) }
         if (ev.type === "error") { setStatus(`Error: ${ev.error}`); close(); setBusy(false) }
       })
-    } catch (e: any) {
-      setStatus(e.message || "Failed")
+    } catch (error: unknown) {
+      setStatus(error instanceof Error ? error.message : "Failed")
       setBusy(false)
     }
   }
