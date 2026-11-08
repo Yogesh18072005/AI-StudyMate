@@ -79,6 +79,7 @@ export default function Chat() {
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const seenRef = useRef<Set<string>>(new Set());
+  const answerReceivedRef = useRef(false);
   const keyFor = (kind: BagItem["kind"], title: string, content: string) =>
     `${kind}:${title.trim().toLowerCase()}|${content.trim().toLowerCase()}`;
 
@@ -161,6 +162,7 @@ export default function Chat() {
       try {
         const m = JSON.parse(ev.data);
         if (m?.type === "answer") {
+          answerReceivedRef.current = true;
           const norm = normalizePayload(m.answer);
           setMessages((prev) => ([...(Array.isArray(prev) ? prev : []), { role: "assistant", content: norm.md, at: Date.now() }]));
           if (norm.flashcards.length) setCards(norm.flashcards);
@@ -254,11 +256,42 @@ export default function Chat() {
     const text = q.trim();
     if (!text || busy) return;
     setMessages((prev) => ([...(Array.isArray(prev) ? prev : []), { role: "user", content: text, at: Date.now() }]));
+    answerReceivedRef.current = false;
     setAwaitingAnswer(true);
     setBusy(true);
     try {
       const r = await chatJSON({ q: text, chatId: chatId || undefined });
-      if (r?.chatId && r.chatId !== chatId) setChatId(r.chatId);
+      const activeChatId = r?.chatId || chatId;
+      if (activeChatId && activeChatId !== chatId) setChatId(activeChatId);
+
+      // The backend starts generating immediately after the POST response.
+      // If the WebSocket connects after the answer event, recover it from chat history.
+      if (activeChatId) {
+        for (let attempt = 0; attempt < 300 && !answerReceivedRef.current; attempt++) {
+          const detail = await getChatDetail(activeChatId).catch(() => null);
+          const serverMessages = Array.isArray(detail?.messages) ? detail.messages : [];
+          const lastMessage = serverMessages[serverMessages.length - 1];
+          const lastUserMessage = [...serverMessages].reverse().find((message) => message.role === "user");
+
+          if (lastMessage?.role === "assistant" && lastUserMessage?.content === text) {
+            const normalized = serverMessages.map((message) =>
+              message.role === "assistant"
+                ? { ...message, content: normalizePayload((message as any).content).md }
+                : message
+            );
+            setMessages(normalized);
+            const answerMessage = serverMessages[serverMessages.length - 1];
+            const answerPayload = normalizePayload((answerMessage as any).content);
+            if (answerPayload.flashcards.length) setCards(answerPayload.flashcards);
+            if (answerPayload.topic) setTopic(answerPayload.topic);
+            else if (answerPayload.md) setTopic((current) => current || deriveTopicFromMarkdown(answerPayload.md));
+            setAwaitingAnswer(false);
+            break;
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
     } finally {
       setBusy(false);
       setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 0);
