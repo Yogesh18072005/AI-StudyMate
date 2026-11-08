@@ -29,6 +29,11 @@ function DaySlots({ date, slots, tasks }: { date: string; slots: PlannerSlot[]; 
     )
 }
 
+function getSummaryText(summary: string | { answer?: string } | undefined): string {
+    if (typeof summary === "string") return summary
+    return typeof summary?.answer === "string" ? summary.answer : ""
+}
+
 export default function Planner() {
     const [text, setText] = useState("")
     const [loading, setLoading] = useState(false)
@@ -323,7 +328,7 @@ export default function Planner() {
                                 )}
 
                                 {materials[t.id]?.summary && (
-                                    <div className="mt-3 text-sm text-zinc-200 whitespace-pre-wrap">{typeof materials[t.id]?.summary === "string" ? materials[t.id]?.summary : (materials[t.id]?.summary as { answer?: string } | undefined)?.answer}</div>
+                                    <div className="mt-3 text-sm text-zinc-200 whitespace-pre-wrap">{getSummaryText(materials[t.id]?.summary)}</div>
                                 )}
                                 {Array.isArray(materials[t.id]?.flashcards?.flashcards) && (
                                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
