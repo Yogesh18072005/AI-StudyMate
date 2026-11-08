@@ -21,5 +21,5 @@ app.use(app.serverStatic("/storage", "./storage"))
 registerRoutes(app)
 
 app.listen(Number.parseInt(process.env.PORT || '5000'), () => {
-  console.log(`[pagelm] running on ${process.env.VITE_BACKEND_URL}`)
+  console.log(`[AI-StudyMate] running on ${process.env.VITE_BACKEND_URL}`)
 })
