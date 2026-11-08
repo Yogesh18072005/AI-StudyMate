@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { companionAsk, type FlashCard } from "../../lib/api"
 import MarkdownView from "../Chat/MarkdownView"
-import { useCompanion } from "./CompanionProvider"
+import { useCompanion } from "./useCompanion"
 
 type CompanionMessage = {
   id: string
