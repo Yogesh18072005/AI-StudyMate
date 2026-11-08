@@ -211,6 +211,14 @@ export default function Chat() {
           else if (norm.md) setTopic((t) => t || deriveTopicFromMarkdown(norm.md));
           setAwaitingAnswer(false);
           setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }), 0);
+        } else if (m?.type === "error") {
+          setAwaitingAnswer(false);
+          setBusy(false);
+          const message = typeof m.error === "string" ? m.error : "Unknown server error";
+          setMessages((prev) => ([
+            ...(Array.isArray(prev) ? prev : []),
+            { role: "assistant", content: `I couldn't complete that answer: ${message}`, at: Date.now() }
+          ]));
         }
       } catch { }
     };
