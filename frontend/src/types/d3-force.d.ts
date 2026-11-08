@@ -17,7 +17,7 @@ declare module "d3-force" {
 
     export interface Simulation<NodeDatum extends SimulationNodeDatum> {
         nodes(nodes: NodeDatum[]): this;
-        force(name: string, force: Force<NodeDatum> | null): this;
+        force(name: string, force: Force<SimulationNodeDatum> | null): this;
         alpha(value: number): this;
         alphaDecay(value: number): this;
         alphaTarget(value: number): this;
@@ -29,12 +29,12 @@ declare module "d3-force" {
     export function forceSimulation<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(
         nodes?: NodeDatum[]
     ): Simulation<NodeDatum>;
-    export function forceManyBody<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(): Force<NodeDatum>;
-    export function forceLink<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(links?: unknown[]): Force<NodeDatum>;
-    export function forceCollide<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(radius?: number): Force<NodeDatum>;
-    export function forceRadial<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(
+    export function forceManyBody(): Force<SimulationNodeDatum>;
+    export function forceLink(links?: unknown[]): Force<SimulationNodeDatum>;
+    export function forceCollide(radius?: number): Force<SimulationNodeDatum>;
+    export function forceRadial(
         radius: number,
         x?: number,
         y?: number
-    ): Force<NodeDatum>;
+    ): Force<SimulationNodeDatum>;
 }
