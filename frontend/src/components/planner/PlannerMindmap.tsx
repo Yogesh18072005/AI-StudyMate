@@ -20,6 +20,56 @@ type Pt = { x: number; y: number }
 type CustomNode = { id: string; x: number; y: number; label: string; color: string }
 type MindmapNode = SimulationNodeDatum & { id: string; x: number; y: number; type: "center" | "step"; taskId?: string; label?: string }
 
+
+// Tiny heuristic: decide contextual steps from task title/type.
+type Step = { label: string; w: number }
+function inferSteps(t: PlannerTask): Step[] {
+    const title = (t.title || '').toLowerCase()
+    const isEssay = /(essay|paper|report|write|draft)/.test(title)
+    const isExam = /(exam|quiz|midterm|final|test|mock)/.test(title)
+    const isReading = /(read|chapter|book|article)/.test(title)
+    const isProblem = /(hw|pset|problem|assignment|calc|algebra|math|physics|chem|bio)/.test(title)
+    if (isEssay) return [
+        { label: 'Research', w: 2 },
+        { label: 'Outline', w: 1 },
+        { label: 'Draft', w: 3 },
+        { label: 'Revise', w: 2 },
+        { label: 'Proofread', w: 1 },
+        { label: 'Submit', w: 1 },
+    ]
+    if (isExam) return [
+        { label: 'Topics Map', w: 1 },
+        { label: 'Flashcards', w: 2 },
+        { label: 'Practice', w: 3 },
+        { label: 'Weak Spots', w: 2 },
+        { label: 'Mock Test', w: 2 },
+        { label: 'Review', w: 1 },
+    ]
+    if (isReading) return [
+        { label: 'Skim', w: 1 },
+        { label: 'Read', w: 3 },
+        { label: 'Notes', w: 2 },
+        { label: 'Summary', w: 1 },
+        { label: 'Discuss/Qs', w: 1 },
+    ]
+    if (isProblem) return [
+        { label: 'Review Notes', w: 1 },
+        { label: 'Examples', w: 2 },
+        { label: 'Solve Set', w: 3 },
+        { label: 'Check/Verify', w: 2 },
+        { label: 'Write-up', w: 1 },
+        { label: 'Submit', w: 1 },
+    ]
+    return [
+        { label: 'Plan', w: 1 },
+        { label: 'Research', w: 2 },
+        { label: 'Make', w: 3 },
+        { label: 'Review', w: 2 },
+        { label: 'Polish', w: 1 },
+        { label: 'Submit', w: 1 },
+    ]
+}
+
 export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdateStatus, onUpload, onDelete, onUpdateNotes }: Props) {
     const wrapRef = useRef<HTMLDivElement>(null)
     const [positions, setPositions] = useState<Record<string, Pt>>({})
@@ -36,58 +86,12 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
     const nodeRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [aiSteps, setAiSteps] = useState<Record<string, string[]>>({})
     const [stepPos, setStepPos] = useState<Record<string, Pt>>({}) // key `${taskId}::${label}` in world coords
+    const stepPosRef = useRef(stepPos)
+    stepPosRef.current = stepPos
     const [menuOpen, setMenuOpen] = useState<string | null>(null)
     const simsRef = useRef<Record<string, Simulation<MindmapNode>>>({})
     const nodeMapRef = useRef<Record<string, MindmapNode>>({})
 
-    // Tiny heuristic: decide contextual steps from task title/type
-    type Step = { label: string; w: number }
-    function inferSteps(t: PlannerTask): Step[] {
-        const title = (t.title || '').toLowerCase()
-        const isEssay = /(essay|paper|report|write|draft)/.test(title)
-        const isExam = /(exam|quiz|midterm|final|test|mock)/.test(title)
-        const isReading = /(read|chapter|book|article)/.test(title)
-        const isProblem = /(hw|pset|problem|assignment|calc|algebra|math|physics|chem|bio)/.test(title)
-        if (isEssay) return [
-            { label: 'Research', w: 2 },
-            { label: 'Outline', w: 1 },
-            { label: 'Draft', w: 3 },
-            { label: 'Revise', w: 2 },
-            { label: 'Proofread', w: 1 },
-            { label: 'Submit', w: 1 },
-        ]
-        if (isExam) return [
-            { label: 'Topics Map', w: 1 },
-            { label: 'Flashcards', w: 2 },
-            { label: 'Practice', w: 3 },
-            { label: 'Weak Spots', w: 2 },
-            { label: 'Mock Test', w: 2 },
-            { label: 'Review', w: 1 },
-        ]
-        if (isReading) return [
-            { label: 'Skim', w: 1 },
-            { label: 'Read', w: 3 },
-            { label: 'Notes', w: 2 },
-            { label: 'Summary', w: 1 },
-            { label: 'Discuss/Qs', w: 1 },
-        ]
-        if (isProblem) return [
-            { label: 'Review Notes', w: 1 },
-            { label: 'Examples', w: 2 },
-            { label: 'Solve Set', w: 3 },
-            { label: 'Check/Verify', w: 2 },
-            { label: 'Write-up', w: 1 },
-            { label: 'Submit', w: 1 },
-        ]
-        return [
-            { label: 'Plan', w: 1 },
-            { label: 'Research', w: 2 },
-            { label: 'Make', w: 3 },
-            { label: 'Review', w: 2 },
-            { label: 'Polish', w: 1 },
-            { label: 'Submit', w: 1 },
-        ]
-    }
 
     function stepCountsFor(t: PlannerTask, steps: Step[]) {
         const total = (slotsByTask[t.id]?.length) || 0
@@ -116,7 +120,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             init[t.id] = { x: cx + r * Math.cos(ang) - 120, y: cy + r * Math.sin(ang) - 40 }
         })
         setPositions(init)
-    }, [tasks])
+    }, [tasks, positions])
 
     // Load/save custom nodes in localStorage
     useEffect(() => {
@@ -139,7 +143,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             }
             if (Object.keys(m).length) setAiSteps(s => ({ ...s, ...m }))
         } catch { /* Best-effort storage and simulation cleanup. */ }
-    }, [tasks.length])
+    }, [tasks])
     useEffect(() => {
         let cancelled = false
             ; (async () => {
@@ -208,7 +212,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             const labels = aiSteps[t.id]?.length ? aiSteps[t.id]! : inferSteps(t).map(s => s.label)
             for (const label of labels) {
                 const sid = `${t.id}::${label}`
-                const sp = stepPos[sid]
+                const sp = stepPosRef.current[sid]
                 const sx = (sp?.x ?? (cx + 120)) + 42
                 const sy = (sp?.y ?? cy) + 14
                 const nid = `s:${sid}`
@@ -260,7 +264,6 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             const raw = localStorage.getItem("planner.stepPos")
             if (raw) setStepPos(JSON.parse(raw))
         } catch { /* Best-effort storage and simulation cleanup. */ }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
     useEffect(() => {
         try { localStorage.setItem("planner.stepPos", JSON.stringify(stepPos)) } catch { /* Best-effort storage and simulation cleanup. */ }
