@@ -153,6 +153,46 @@ export default function Chat() {
   }, [chatId]);
 
   useEffect(() => {
+    if (!chatId || !initialQuestion || state.answer) return;
+
+    let cancelled = false;
+    answerReceivedRef.current = false;
+
+    const recoverInitialAnswer = async () => {
+      for (let attempt = 0; attempt < 300 && !cancelled && !answerReceivedRef.current; attempt++) {
+        const detail = await getChatDetail(chatId).catch(() => null);
+        const serverMessages = Array.isArray(detail?.messages) ? detail.messages : [];
+        const lastMessage = serverMessages[serverMessages.length - 1];
+        const lastUserMessage = [...serverMessages].reverse().find((message) => message.role === "user");
+
+        if (lastMessage?.role === "assistant" && lastUserMessage?.content === initialQuestion) {
+          answerReceivedRef.current = true;
+          const normalized = serverMessages.map((message) =>
+            message.role === "assistant"
+              ? { ...message, content: normalizePayload((message as any).content).md }
+              : message
+          );
+          setMessages(normalized);
+
+          const answerPayload = normalizePayload((lastMessage as any).content);
+          if (answerPayload.flashcards.length) setCards(answerPayload.flashcards);
+          if (answerPayload.topic) setTopic(answerPayload.topic);
+          else if (answerPayload.md) setTopic((current) => current || deriveTopicFromMarkdown(answerPayload.md));
+          setAwaitingAnswer(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    };
+
+    void recoverInitialAnswer();
+    return () => {
+      cancelled = true;
+    };
+  }, [chatId, initialQuestion, state.answer]);
+
+  useEffect(() => {
     if (!chatId) return;
     const wsUrl = (env.backend || window.location.origin).replace(/^http/, "ws") + `/ws/chat?chatId=${encodeURIComponent(chatId)}`;
     const ws = new WebSocket(wsUrl);
