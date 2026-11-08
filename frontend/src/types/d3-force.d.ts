@@ -12,7 +12,7 @@ declare module "d3-force" {
     export interface Force<NodeDatum extends SimulationNodeDatum> {
         (alpha: number): void;
         initialize?(nodes: NodeDatum[], random: () => number): void;
-        strength?(value: number): Force<NodeDatum>;
+        strength(value: number): Force<NodeDatum>;
     }
 
     export interface Simulation<NodeDatum extends SimulationNodeDatum> {
