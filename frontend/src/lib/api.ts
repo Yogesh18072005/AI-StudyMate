@@ -33,7 +33,7 @@ export type PodcastEvent =
   | { type: "phase"; value: string }
   | { type: "file"; filename: string; mime: string }
   | { type: "warn"; message: string }
-  | { type: "script"; data: any }
+  | { type: "script"; data: unknown }
   | { type: "audio"; file: string; filename?: string; staticUrl?: string }
   | { type: "done" }
   | { type: "error"; error: string }
@@ -104,7 +104,7 @@ async function req<T = unknown>(
   }
 }
 
-const jsonHeaders = (_?: unknown) => {
+const jsonHeaders = () => {
   const h = new Headers();
   h.set("content-type", "application/json");
   return h;
@@ -119,7 +119,7 @@ function wsURL(path: string) {
 export async function chatJSON(body: ChatJSONBody) {
   return req<ChatStartResponse>(`${env.backend}/chat`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify(body),
   });
 }
@@ -204,7 +204,7 @@ export async function companionAsk(input: {
 
   return req<CompanionAskResponse>(`${env.backend}/api/companion/ask`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify(payload),
     timeout: Math.max(env.timeout, 120000),
   });
@@ -225,7 +225,7 @@ export async function createFlashcard(input: {
 }) {
   return req<{ ok: true; flashcard: SavedFlashcard }>(`${env.backend}/flashcards`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify(input),
   });
 }
@@ -254,7 +254,7 @@ export async function startExam(examId: string) {
     `${env.backend}/exam`,
     {
       method: "POST",
-      headers: jsonHeaders({}),
+      headers: jsonHeaders(),
       body: JSON.stringify({ examId }),
     }
   )
@@ -303,7 +303,7 @@ export function flashcards(topic: string) {
 export async function quizStart(topic: string) {
   return req<QuizStartResponse>(`${env.backend}/quiz`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify({ topic })
   }
   )
@@ -321,20 +321,20 @@ export async function podcastStart(payload: { topic: string }) {
   return data
 }
 
-export function connectPodcastStream(pid: string, onEvent: (ev: any) => void) {
+export function connectPodcastStream(pid: string, onEvent: (ev: PodcastEvent) => void) {
   const wsUrl = `${env.backend.replace(/^http/, "ws")}/ws/podcast?pid=${pid}`
   const ws = new WebSocket(wsUrl)
 
   ws.onmessage = (e) => {
     try {
-      const msg = JSON.parse(e.data)
+      const msg = JSON.parse(e.data as string) as PodcastEvent
       onEvent(msg)
-    } catch (err) {
+    } catch {
       onEvent({ type: "error", error: "invalid_message" })
     }
   }
 
-  ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any)
+  ws.onerror = () => onEvent({ type: "error", error: "stream_error" })
   return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
 }
 
@@ -386,12 +386,12 @@ export type PlannerEvent =
   | { type: "materials.done"; id: string; total: number }
   | { type: "reminder"; text: string; at: number; taskId?: string; scheduledFor?: string }
   | { type: "daily.digest"; date: string; due: { id: string; title: string; dueAt: number }[]; sessions: number; message: string }
-  | { type: "evening.review"; date: string; stats: any; tomorrowTasks: { id: string; title: string }[]; message: string }
+  | { type: "evening.review"; date: string; stats: Record<string, unknown>; tomorrowTasks: { id: string; title: string }[]; message: string }
   | { type: "break.reminder"; text: string; at: string }
   | { type: "task.created"; task: PlannerTask }
   | { type: "task.updated"; task: PlannerTask }
   | { type: "task.deleted"; taskId: string }
-  | { type: "task.files.added"; taskId: string; files: any[] }
+  | { type: "task.files.added"; taskId: string; files: NonNullable<PlannerTask["files"]> }
   | { type: "task.file.removed"; taskId: string; fileId: string }
   | { type: "session.started"; session: { id: string; taskId: string; slotId?: string; startedAt: string; status: string } }
   | { type: "session.ended"; session: { id: string; endedAt: string; minutesWorked: number; completed: boolean; status: string } }
@@ -402,7 +402,7 @@ export type PlannerEvent =
 export async function plannerIngest(text: string) {
   return req<{ ok: boolean; task: PlannerTask }>(`${env.backend}/tasks/ingest`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify({ text })
   })
 }
@@ -419,7 +419,7 @@ export async function plannerList(params?: { status?: string; dueBefore?: number
 export async function plannerPlan(id: string, cram?: boolean) {
   return req<{ ok: boolean; task: PlannerTask & { plan?: { slots: PlannerSlot[] } } }>(`${env.backend}/tasks/${encodeURIComponent(id)}/plan`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify({ cram: !!cram })
   })
 }
@@ -427,15 +427,15 @@ export async function plannerPlan(id: string, cram?: boolean) {
 export async function plannerWeekly(cram?: boolean) {
   return req<{ ok: boolean; plan: WeeklyPlan }>(`${env.backend}/planner/weekly`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify({ cram: !!cram })
   })
 }
 
 export async function plannerMaterials(id: string, kind: "summary" | "studyGuide" | "flashcards" | "quiz") {
-  return req<{ ok: boolean; data: any }>(`${env.backend}/tasks/${encodeURIComponent(id)}/materials`, {
+  return req<{ ok: boolean; data: unknown }>(`${env.backend}/tasks/${encodeURIComponent(id)}/materials`, {
     method: "POST",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify({ kind })
   })
 }
@@ -456,7 +456,7 @@ export function connectPlannerStream(sid: string, onEvent: (ev: PlannerEvent) =>
 export async function plannerUpdate(id: string, patch: Partial<PlannerTask>) {
   return req<{ ok: boolean; task: PlannerTask }>(`${env.backend}/tasks/${encodeURIComponent(id)}`, {
     method: "PATCH",
-    headers: jsonHeaders({}),
+    headers: jsonHeaders(),
     body: JSON.stringify(patch)
   })
 }
@@ -477,7 +477,7 @@ export async function plannerCreateWithFiles(data: { text?: string; title?: stri
     }
   }
 
-  return req<{ ok: boolean; task: PlannerTask & { files?: any[] } }>(`${env.backend}/tasks`, {
+  return req<{ ok: boolean; task: PlannerTask }>(`${env.backend}/tasks`, {
     method: "POST",
     body: formData,
     timeout: Math.max(env.timeout, 300000),
@@ -490,7 +490,7 @@ export async function plannerUploadFiles(taskId: string, files: File[]) {
     formData.append('file', file, file.name)
   }
 
-  return req<{ ok: boolean; files: any[] }>(`${env.backend}/tasks/${encodeURIComponent(taskId)}/files`, {
+  return req<{ ok: boolean; files: NonNullable<PlannerTask["files"]> }>(`${env.backend}/tasks/${encodeURIComponent(taskId)}/files`, {
     method: "POST",
     body: formData,
     timeout: Math.max(env.timeout, 300000),
@@ -552,8 +552,10 @@ export async function getDebateSession(debateId: string) {
   })
 }
 
+export type DebateSummary = Pick<DebateSession, "id" | "topic" | "position" | "createdAt"> & { status?: string; winner?: string };
+
 export async function listDebates() {
-  return req<{ ok: boolean; debates: Array<any>; error?: string }>(`${env.backend}/debates`, {
+  return req<{ ok: boolean; debates: DebateSummary[]; error?: string }>(`${env.backend}/debates`, {
     method: "GET",
   })
 }
