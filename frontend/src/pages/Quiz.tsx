@@ -51,12 +51,12 @@ export default function Quiz() {
 
   useEffect(() => () => { if (closeRef.current) closeRef.current(); }, []);
 
-  function resetQuestionState() {
+  const resetQuestionState = useCallback(() => {
     setIdx(0);
     setSelected(null);
     setShowHint(false);
     setShowExp(false);
-  }
+  }, []);
 
   const start = useCallback(async (t: string) => {
     const trimmed = t.trim();
@@ -97,7 +97,7 @@ export default function Quiz() {
     } catch {
       setConnecting(false);
     }
-  }, [navigate, search]);
+  }, [navigate, search, resetQuestionState]);
 
   useEffect(() => { if (!initialTopic) return; start(initialTopic); }, [initialTopic, start]);
 
