@@ -44,7 +44,7 @@ function parseLooseStructuredPayload(s: string): { md: string; flashcards: Flash
       try {
         const parsed = JSON.parse(arrayMatch[1]);
         if (Array.isArray(parsed)) flashcards = parsed;
-      } catch { }
+      } catch { /* Ignore malformed optional payloads and best-effort cleanup failures. */ }
     }
     answerText = answerText.slice(0, flashcardsMatch.index);
   }
@@ -81,15 +81,15 @@ function normalizePayload(payload: unknown): { md: string; flashcards: FlashCard
     return { md: s, flashcards: [] };
   }
   if (payload && typeof payload === "object") {
-    const o = payload as any;
-    const answer = typeof o?.answer === "string" ? o.answer : String(o?.html || "");
+    const o = payload as Record<string, unknown>;
+    const answer = typeof o.answer === "string" ? o.answer : typeof o.html === "string" ? o.html : "";
     // The backend may already wrap the model's raw text in an AskPayload object.
     // Normalize the nested answer too, because it can still contain JSON/YAML-like output.
     const nested = answer ? normalizePayload(answer) : { md: "", flashcards: [] as FlashCard[] };
     return {
       md: nested.md,
-      flashcards: nested.flashcards.length ? nested.flashcards : (Array.isArray(o?.flashcards) ? o.flashcards : []),
-      topic: (typeof o?.topic === "string" ? o.topic : undefined) || nested.topic,
+      flashcards: nested.flashcards.length ? nested.flashcards : (Array.isArray(o.flashcards) ? o.flashcards as FlashCard[] : []),
+      topic: (typeof o.topic === "string" ? o.topic : undefined) || nested.topic,
     };
   }
   return { md: "", flashcards: [] };
@@ -103,7 +103,7 @@ function deriveTopicFromMarkdown(md: string): string {
 export default function Chat() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation() as any;
+  const location = useLocation();
   const state = (location?.state || {}) as {
     chatId?: string;
     q?: string;
@@ -143,7 +143,7 @@ export default function Chat() {
           const res = await getChats();
           const list = Array.isArray(res?.chats) ? res.chats : [];
           if (list.length) {
-            const latest = [...list].sort((a: any, b: any) => (b.at || 0) - (a.at || 0))[0];
+            const latest = [...list].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
             if (latest?.id) {
               setChatId(latest.id);
               navigate(`/chat?chatId=${encodeURIComponent(latest.id)}`, { replace: true, state: { chatId: latest.id } });
@@ -186,11 +186,11 @@ export default function Chat() {
       .then((res) => {
         if (res?.ok && Array.isArray(res.messages)) {
           const normalized = res.messages.map((m) =>
-            m.role === "assistant" ? { ...m, content: normalizePayload((m as any).content).md } : m
+            m.role === "assistant" ? { ...m, content: normalizePayload(m.content).md } : m
           );
           setMessages(normalized);
           for (let i = normalized.length - 1; i >= 0; i--) {
-            const raw = (res.messages[i] as any)?.content;
+            const raw = res.messages[i]?.content;
             if (normalized[i].role === "assistant") {
               const n = normalizePayload(raw);
               if (n.flashcards.length) setCards(n.flashcards);
@@ -201,7 +201,7 @@ export default function Chat() {
           }
         }
       })
-      .catch(() => { });
+      .catch(() => { /* A missing saved response is recovered by the next poll. */ });
   }, [chatId]);
 
   useEffect(() => {
@@ -221,12 +221,12 @@ export default function Chat() {
           answerReceivedRef.current = true;
           const normalized = serverMessages.map((message) =>
             message.role === "assistant"
-              ? { ...message, content: normalizePayload((message as any).content).md }
+              ? { ...message, content: normalizePayload(message.content).md }
               : message
           );
           setMessages(normalized);
 
-          const answerPayload = normalizePayload((lastMessage as any).content);
+          const answerPayload = normalizePayload(lastMessage.content);
           if (answerPayload.flashcards.length) setCards(answerPayload.flashcards);
           if (answerPayload.topic) setTopic(answerPayload.topic);
           else if (answerPayload.md) setTopic((current) => current || deriveTopicFromMarkdown(answerPayload.md));
@@ -286,9 +286,9 @@ export default function Chat() {
       if (!rect || !r.toString().trim()) return;
       setSelected({ text: r.toString().trim(), x: rect.left + rect.width / 2 - 60 + window.scrollX, y: rect.bottom + window.scrollY });
     };
-    const onDocClick = (e: any) => {
-      const n = e.target as Node;
-      if (selPopupRef.current && !selPopupRef.current.contains(n) && !window.getSelection()?.toString().trim()) setSelected(null);
+    const onDocClick = (e: MouseEvent) => {
+      const n = e.target;
+      if (n instanceof Node && selPopupRef.current && !selPopupRef.current.contains(n) && !window.getSelection()?.toString().trim()) setSelected(null);
     };
     document.addEventListener("mouseup", onSel);
     document.addEventListener("keyup", onSel);
@@ -329,7 +329,7 @@ export default function Chat() {
     try {
       const res = await listFlashcards();
       const items = res.flashcards || [];
-      await Promise.all(items.map((c) => deleteFlashcard(c.id).catch(() => { })));
+      await Promise.all(items.map((c) => deleteFlashcard(c.id).catch(() => { /* Continue clearing the remaining saved cards. */ })));
     } catch { }
     setBag([]);
     seenRef.current.clear();
@@ -377,12 +377,12 @@ export default function Chat() {
           if (lastMessage?.role === "assistant" && lastUserMessage?.content === text) {
             const normalized = serverMessages.map((message) =>
               message.role === "assistant"
-                ? { ...message, content: normalizePayload((message as any).content).md }
+                ? { ...message, content: normalizePayload(message.content).md }
                 : message
             );
             setMessages(normalized);
             const answerMessage = serverMessages[serverMessages.length - 1];
-            const answerPayload = normalizePayload((answerMessage as any).content);
+            const answerPayload = normalizePayload(answerMessage.content);
             if (answerPayload.flashcards.length) setCards(answerPayload.flashcards);
             if (answerPayload.topic) setTopic(answerPayload.topic);
             else if (answerPayload.md) setTopic((current) => current || deriveTopicFromMarkdown(answerPayload.md));
