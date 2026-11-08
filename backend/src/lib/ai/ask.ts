@@ -150,7 +150,8 @@ export async function askWithContext(opts: AskWithContextOptions): Promise<AskPa
   const historyArr = Array.isArray(opts.history) ? opts.history : undefined
   const historyCache = serializeHistoryForCache(historyArr)
 
-  const ck = { t: opts.cacheScope || "ask_ctx", q: safeQ, ctx, topic, sys: systemPrompt, hist: historyCache }
+  // Bump this version when response parsing changes so malformed cached answers are regenerated.
+  const ck = { parserVersion: 2, t: opts.cacheScope || "ask_ctx", q: safeQ, ctx, topic, sys: systemPrompt, hist: historyCache }
   const cached = readCache(ck)
   if (cached) return cached
 
