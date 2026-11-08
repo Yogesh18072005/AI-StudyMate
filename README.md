@@ -33,9 +33,10 @@ Upload study materials, ask questions, create quizzes, generate flashcards, orga
 
 ### Prerequisites
 
-- Node.js 21.18 or later
+- Node.js **22.23.4** (see `.nvmrc`)
 - npm
 - Git
+- [Ollama](https://ollama.com/) for the default local AI configuration
 
 ### 1. Clone the repository
 
@@ -46,6 +47,8 @@ cd AI-StudyMate
 
 ### 2. Install dependencies
 
+Run these commands from the project root:
+
 ```bash
 npm install
 npm install --prefix frontend
@@ -53,7 +56,7 @@ npm install --prefix frontend
 
 ### 3. Configure environment variables
 
-Create your environment file:
+Create your local environment file:
 
 **Windows PowerShell:**
 
@@ -61,39 +64,65 @@ Create your environment file:
 Copy-Item .env.example .env
 ```
 
-Open `.env` and configure the required AI provider credentials and settings.
+The example configuration uses Ollama locally by default. Make sure Ollama is running, then download the configured chat and embedding models once:
 
-Keep your API keys private. Never upload your `.env` file to GitHub.
+```bash
+ollama pull llama3.2:3b
+ollama pull nomic-embed-text
+```
+
+If you choose a hosted AI provider instead, update the relevant provider and API-key settings in `.env`. Hosted providers may incur usage charges.
+
+**Never commit your `.env` file or share API keys.**
 
 ### 4. Start the backend
 
-Open a terminal in the project root:
+From the project root:
 
 ```bash
 npm run dev
 ```
 
-Backend address:
-
-`http://localhost:5000`
+Backend address: `http://localhost:5000`
 
 ### 5. Start the frontend
 
-Open a second terminal in the project root:
+Open a second terminal at the project root:
 
 ```bash
 npm run dev --prefix frontend
 ```
 
-Frontend address:
-
-`http://localhost:5173`
+Frontend address: `http://localhost:5173`
 
 Open the frontend address in your browser.
 
+### Optional: use the setup script
+
+- Windows PowerShell: `./setup.ps1`
+- macOS/Linux: `bash ./setup.sh`
+
+The scripts install both dependency sets, create `.env` if it is missing, and start the backend and frontend.
+
+## 🧪 Validation
+
+Run backend tests and build from the project root:
+
+```bash
+npm test
+npm run build
+```
+
+Run frontend lint and production build:
+
+```bash
+npm run lint --prefix frontend
+npm run build --prefix frontend
+```
+
 ## 🤖 Supported AI Providers
 
-The original PageLM codebase supports integrations including:
+The codebase supports integrations including:
 
 - Google Gemini
 - OpenAI
@@ -102,7 +131,7 @@ The original PageLM codebase supports integrations including:
 - Ollama
 - OpenRouter
 
-Provider availability depends on configuration and credentials.
+Provider availability depends on configuration and credentials. Local Ollama inference does not require a hosted LLM API key, but it does require the models to be downloaded on your computer.
 
 ## 📁 Project Structure
 
@@ -135,7 +164,7 @@ Original repository: https://github.com/CaviraOSS/PageLM
 
 The original project is distributed under the CaviraOSS Community License.
 
-Please retain and follow the original `LICENSE` / `LICENSE.md` terms. Commercial use or resale requires prior written permission from CaviraOSS, according to the original project README.
+Please retain and follow the original `LICENSE.md` terms. Commercial use or resale requires prior written permission from CaviraOSS, according to the original project README.
 
 ---
 
