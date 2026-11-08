@@ -27,8 +27,10 @@ export type UA = {
   explanation: string
 }
 
+type ExamSummary = { id: string; name: string; sections: unknown[] };
+
 export default function ExamLabs() {
-  const [exams, setExams] = useState<any[]>([])
+  const [exams, setExams] = useState<ExamSummary[]>([])
   const [loadingExams, setLoadingExams] = useState(true)
 
   const [qs, setQs] = useState<Question[]>([])
@@ -90,7 +92,7 @@ export default function ExamLabs() {
       const { close } = connectExamStream(runId, (ev: ExamEvent) => {
         if (ev.type === "exam") {
           const arr = Array.isArray(ev.payload) ? ev.payload : []
-          setQs(arr.map((q: any) => ({ ...q, correct: Math.max(0, q.correct - 1) })))
+          setQs(arr.map((question) => ({ ...question, correct: Math.max(0, question.correct - 1) })))
           setIdx(0)
           setConnecting(false)
         }
