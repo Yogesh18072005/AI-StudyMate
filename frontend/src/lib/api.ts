@@ -143,12 +143,12 @@ export function connectChatStream(chatId: string, onEvent: (ev: ChatEvent) => vo
     try {
       const data = JSON.parse(m.data as string) as ChatEvent;
       onEvent(data);
-    } catch { }
+    } catch { /* Ignore malformed or already-closed stream events. */ }
   };
   ws.onerror = () => {
     onEvent({ type: "error", error: "stream_error" });
   };
-  return { ws, close: () => { try { ws.close(); } catch { } } };
+  return { ws, close: () => { try { ws.close(); } catch { /* Ignore malformed or already-closed stream events. */ } } };
 }
 
 export async function chatAskOnce(opts: {
@@ -266,10 +266,10 @@ export function connectExamStream(runId: string, onEvent: (ev: ExamEvent) => voi
   ws.onmessage = (m) => {
     try {
       onEvent(JSON.parse(m.data as string) as ExamEvent)
-    } catch { }
+    } catch { /* Ignore malformed or already-closed stream events. */ }
   }
   ws.onerror = () => onEvent({ type: "error", error: "stream_error" })
-  return { ws, close: () => { try { ws.close() } catch { } } }
+  return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
 }
 
 export async function smartnotesStart(input: { topic?: string; notes?: string; filePath?: string }) {
@@ -286,10 +286,10 @@ export function connectSmartnotesStream(noteId: string, onEvent: (ev: SmartNotes
   ws.onmessage = (m) => {
     try {
       onEvent(JSON.parse(m.data as string) as SmartNotesEvent);
-    } catch { }
+    } catch { /* Ignore malformed or already-closed stream events. */ }
   };
   ws.onerror = () => onEvent({ type: "error", error: "stream_error" });
-  return { ws, close: () => { try { ws.close(); } catch { } } };
+  return { ws, close: () => { try { ws.close(); } catch { /* Ignore malformed or already-closed stream events. */ } } };
 }
 
 export function flashcards(topic: string) {
@@ -325,9 +325,6 @@ export function connectPodcastStream(pid: string, onEvent: (ev: any) => void) {
   const wsUrl = `${env.backend.replace(/^http/, "ws")}/ws/podcast?pid=${pid}`
   const ws = new WebSocket(wsUrl)
 
-  ws.onopen = () => {
-  }
-
   ws.onmessage = (e) => {
     try {
       const msg = JSON.parse(e.data)
@@ -337,11 +334,8 @@ export function connectPodcastStream(pid: string, onEvent: (ev: any) => void) {
     }
   }
 
-  ws.onclose = (e) => {
-  }
-
   ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any)
-  return { ws, close: () => { try { ws.close() } catch { } } }
+  return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
 }
 
 export function connectQuizStream(quizId: string, onEvent: (ev: QuizEvent) => void) {
@@ -349,8 +343,8 @@ export function connectQuizStream(quizId: string, onEvent: (ev: QuizEvent) => vo
   const ws = new WebSocket(url); ws.onmessage = m => {
     try {
       onEvent(JSON.parse(m.data as string) as QuizEvent)
-    } catch { }
-  }; ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any); return { ws, close: () => { try { ws.close() } catch { } } }
+    } catch { /* Ignore malformed or already-closed stream events. */ }
+  }; ws.onerror = () => onEvent({ type: "error", error: "stream_error" } as any); return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
 }
 
 export async function transcribeAudio(file: File) {
@@ -453,10 +447,10 @@ export function connectPlannerStream(sid: string, onEvent: (ev: PlannerEvent) =>
     try {
       const ev = JSON.parse(m.data as string)
       onEvent(ev)
-    } catch { }
+    } catch { /* Ignore malformed or already-closed stream events. */ }
   }
   ws.onerror = () => { /* ignore for now */ }
-  return { ws, close: () => { try { ws.close() } catch { } } }
+  return { ws, close: () => { try { ws.close() } catch { /* Ignore malformed or already-closed stream events. */ } } }
 }
 
 export async function plannerUpdate(id: string, patch: Partial<PlannerTask>) {
