@@ -28,8 +28,8 @@ const components: Components = {
   thead: (p) => <thead className="border-b border-zinc-800" {...p} />,
   th: (p) => <th className="px-3 py-2 font-semibold text-stone-100" {...p} />,
   td: (p) => <td className="px-3 py-2 align-top" {...p} />,
-  code: ({ inline, className, children, ...rest }: any) => {
-    if (inline) {
+  code: ({ className, children, ...rest }) => {
+    if (!className) {
       return (
         <code className="px-1.5 py-0.5 rounded bg-stone-800 text-stone-100 text-xs sm:text-sm break-all" {...rest}>
           {children}
