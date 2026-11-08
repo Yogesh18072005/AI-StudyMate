@@ -1,6 +1,7 @@
 import fs from "fs"
 import path from "path"
 import crypto from "crypto"
+import { config } from "../../config/env"
 import llm from "../../utils/llm/llm"
 import { execDirect } from "../../agents/runtime"
 import { normalizeTopic } from "../../utils/text/normalize"
@@ -173,7 +174,7 @@ export async function handleAsk(
     }
   }
 
-  if (hasJsonContext) {
+  if (hasJsonContext || config.db_mode !== "json") {
     const rag = await execDirect({
       agent: "researcher",
       plan: { steps: [{ tool: "rag.search", input: { q: safeQ, ns: nsFinal, k }, timeoutMs: 8000, retries: 1 }] },
