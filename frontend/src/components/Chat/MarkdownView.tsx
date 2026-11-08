@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
-import type { PluggableList } from "unified";
+
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import remarkMath from "remark-math";
 
 type Props = { md: string };
+type PluggableList = NonNullable<ComponentProps<typeof ReactMarkdown>["rehypePlugins"]>;
 
 const components: Components = {
   h1: (p) => <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mt-2 mb-4 text-stone-100 break-words" {...p} />,
