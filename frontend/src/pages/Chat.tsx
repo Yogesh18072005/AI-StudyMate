@@ -82,7 +82,15 @@ function normalizePayload(payload: unknown): { md: string; flashcards: FlashCard
   }
   if (payload && typeof payload === "object") {
     const o = payload as any;
-    return { md: String(o?.answer || o?.html || ""), flashcards: Array.isArray(o?.flashcards) ? o.flashcards : [], topic: typeof o?.topic === "string" ? o.topic : undefined };
+    const answer = typeof o?.answer === "string" ? o.answer : String(o?.html || "");
+    // The backend may already wrap the model's raw text in an AskPayload object.
+    // Normalize the nested answer too, because it can still contain JSON/YAML-like output.
+    const nested = answer ? normalizePayload(answer) : { md: "", flashcards: [] as FlashCard[] };
+    return {
+      md: nested.md,
+      flashcards: nested.flashcards.length ? nested.flashcards : (Array.isArray(o?.flashcards) ? o.flashcards : []),
+      topic: (typeof o?.topic === "string" ? o.topic : undefined) || nested.topic,
+    };
   }
   return { md: "", flashcards: [] };
 }
