@@ -11,7 +11,9 @@ export default function FlashCards() {
     try {
       const { flashcards } = await listFlashcards();
       setItems((flashcards || []).sort((a, b) => b.created - a.created));
-    } catch {}
+    } catch (error) {
+      console.error("Failed to load flashcards:", error);
+    }
   };
 
   useEffect(() => {
@@ -22,7 +24,9 @@ export default function FlashCards() {
     setBusy(true);
     try {
       await deleteFlashcard(id);
-    } catch {}
+    } catch (error) {
+      console.error("Failed to delete flashcard:", error);
+    }
     await load();
     setBusy(false);
   };
@@ -31,8 +35,12 @@ export default function FlashCards() {
     if (!items.length) return;
     setBusy(true);
     try {
-      await Promise.all(items.map((i) => deleteFlashcard(i.id).catch(() => {})));
-    } catch {}
+      await Promise.all(items.map((i) => deleteFlashcard(i.id).catch((error: unknown) => {
+        console.error(`Failed to delete flashcard ${i.id}:`, error);
+      })));
+    } catch (error) {
+      console.error("Failed to clear flashcards:", error);
+    }
     await load();
     setBusy(false);
   };
