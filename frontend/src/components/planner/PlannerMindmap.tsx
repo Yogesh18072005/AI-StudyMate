@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { forceSimulation, forceManyBody, forceCollide, forceRadial, type Simulation } from "d3-force"
+import { forceSimulation, forceManyBody, forceCollide, forceRadial, type Simulation, type SimulationNodeDatum } from "d3-force"
 import { anchorLine } from "./mindmap/geometry"
 import { plannerMaterials } from "../../lib/api"
 import type { PlannerTask, PlannerSlot, WeeklyPlan } from "../../lib/api"
@@ -18,11 +18,11 @@ type Props = {
 
 type Pt = { x: number; y: number }
 type CustomNode = { id: string; x: number; y: number; label: string; color: string }
+type MindmapNode = SimulationNodeDatum & { id: string; x: number; y: number; type: "center" | "step"; taskId?: string; label?: string }
 
-export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdateStatus, onUpload, onDelete, onStartNow, onUpdateNotes }: Props) {
+export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdateStatus, onUpload, onDelete, onUpdateNotes }: Props) {
     const wrapRef = useRef<HTMLDivElement>(null)
     const [positions, setPositions] = useState<Record<string, Pt>>({})
-    const [selected, setSelected] = useState<string | null>(null)
     const [drag, setDrag] = useState<{ id: string; off: Pt } | null>(null)
     const [dragCustom, setDragCustom] = useState<{ id: string; off: Pt } | null>(null)
     const [dragStep, setDragStep] = useState<{ id: string; off: Pt } | null>(null)
@@ -37,8 +37,8 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
     const [aiSteps, setAiSteps] = useState<Record<string, string[]>>({})
     const [stepPos, setStepPos] = useState<Record<string, Pt>>({}) // key `${taskId}::${label}` in world coords
     const [menuOpen, setMenuOpen] = useState<string | null>(null)
-    const simsRef = useRef<Record<string, Simulation<any, any>>>({})
-    const nodeMapRef = useRef<Record<string, any>>({})
+    const simsRef = useRef<Record<string, Simulation<MindmapNode>>>({})
+    const nodeMapRef = useRef<Record<string, MindmapNode>>({})
 
     // Tiny heuristic: decide contextual steps from task title/type
     type Step = { label: string; w: number }
@@ -123,7 +123,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
         try {
             const raw = localStorage.getItem("planner.customNodes")
             if (raw) setCustomNodes(JSON.parse(raw))
-        } catch { }
+        } catch { /* Best-effort storage and simulation cleanup. */ }
     }, [])
     useEffect(() => {
         try { localStorage.setItem("planner.customNodes", JSON.stringify(customNodes)) } catch { }
@@ -139,7 +139,6 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             }
             if (Object.keys(m).length) setAiSteps(s => ({ ...s, ...m }))
         } catch { }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tasks.length])
     useEffect(() => {
         let cancelled = false
@@ -149,11 +148,13 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
                     try {
                         const res = await plannerMaterials(t.id, "studyGuide")
                         if (cancelled) return
-                        const data: any = res?.data || {}
+                        const rawData: unknown = res?.data
+                        if (!rawData || typeof rawData !== "object") continue
+                        const data = rawData as Record<string, unknown>
                         const labels: string[] = []
-                        if (Array.isArray(data.mainConcepts)) labels.push(...data.mainConcepts)
-                        if (Array.isArray(data.importantTerms)) labels.push(...data.importantTerms.map((x: any) => x?.term).filter(Boolean))
-                        if (labels.length === 0 && Array.isArray(data.questions)) labels.push(...data.questions)
+                        if (Array.isArray(data.mainConcepts)) labels.push(...data.mainConcepts.filter((value): value is string => typeof value === "string"))
+                        if (Array.isArray(data.importantTerms)) labels.push(...data.importantTerms.map((item) => item && typeof item === "object" && "term" in item && typeof item.term === "string" ? item.term : "").filter(Boolean))
+                        if (labels.length === 0 && Array.isArray(data.questions)) labels.push(...data.questions.filter((value): value is string => typeof value === "string"))
                         const uniq = Array.from(new Set(labels.map(x => String(x).trim()).filter(Boolean))).slice(0, 6)
                         if (uniq.length) {
                             setAiSteps(s => { const next = { ...s, [t.id]: uniq }; try { localStorage.setItem(`planner.aiSteps.${t.id}`, JSON.stringify(uniq)) } catch { }; return next })
@@ -192,7 +193,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
     useEffect(() => {
         for (const id of Object.keys(simsRef.current)) { try { simsRef.current[id].stop() } catch { } }
         simsRef.current = {}
-        const nm: Record<string, any> = {}
+        const nm: Record<string, MindmapNode> = {}
         for (const t of tasks) {
             const base = positions[t.id]; if (!base) continue
             const node = nodeRefs.current[t.id]
@@ -201,8 +202,8 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             const cx = base.x + w / 2
             const cy = base.y + h / 2
             const cid = `t:${t.id}`
-            const center = { id: cid, x: cx, y: cy, fx: cx, fy: cy, type: 'center' }
-            const nodes: any[] = [center]
+            const center: MindmapNode = { id: cid, x: cx, y: cy, fx: cx, fy: cy, type: 'center' }
+            const nodes: MindmapNode[] = [center]
             nm[cid] = center
             const labels = aiSteps[t.id]?.length ? aiSteps[t.id]! : inferSteps(t).map(s => s.label)
             for (const label of labels) {
@@ -211,7 +212,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
                 const sx = (sp?.x ?? (cx + 120)) + 42
                 const sy = (sp?.y ?? cy) + 14
                 const nid = `s:${sid}`
-                const sn = { id: nid, x: sx, y: sy, type: 'step', taskId: t.id, label }
+                const sn: MindmapNode = { id: nid, x: sx, y: sy, type: 'step', taskId: t.id, label }
                 nodes.push(sn); nm[nid] = sn
             }
             const sim = forceSimulation(nodes)
@@ -225,7 +226,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
                 for (const n of nodes) if (n.type === 'step') next[`${n.taskId}::${n.label}`] = { x: (n.x || 0) - 42, y: (n.y || 0) - 14 }
                 if (Object.keys(next).length) setStepPos(prev => ({ ...prev, ...next }))
             })
-            simsRef.current[t.id] = sim as any
+            simsRef.current[t.id] = sim
         }
         nodeMapRef.current = nm
         return () => { for (const id of Object.keys(simsRef.current)) { try { simsRef.current[id].stop() } catch { } } }
@@ -344,7 +345,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             return
         }
     }
-    const onUp = (e: React.PointerEvent) => {
+    const onUp = () => {
         if (drag) setDrag(null)
         if (dragStep) {
             const snode = nodeMapRef.current[`s:${dragStep.id}`]
@@ -383,7 +384,6 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
         panning.current = { on: true, start: { x: localX, y: localY }, base: { ...pan } }
     }
 
-    const taskIndex = useMemo(() => Object.fromEntries(tasks.map(t => [t.id, t])), [tasks])
     const slotsByTask = useMemo(() => {
         const m: Record<string, PlannerSlot[]> = {}
         for (const d of plan?.days || []) for (const s of d.slots) (m[s.taskId] ||= []).push(s)
@@ -398,7 +398,7 @@ export default function PlannerMindmap({ tasks, plan, onPlan, onAssist, onUpdate
             <div className="pointer-events-none absolute inset-0" style={{
                 zIndex: 1,
                 opacity: 0.7,
-                mixBlendMode: 'screen' as any,
+                mixBlendMode: 'screen',
                 backgroundImage: [
                     `radial-gradient(900px 500px at 18% 8%, rgba(56,189,248,0.10), rgba(56,189,248,0) 60%)`,
                     `radial-gradient(700px 420px at 82% 28%, rgba(147,51,234,0.09), rgba(147,51,234,0) 60%)`,
