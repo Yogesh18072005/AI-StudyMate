@@ -1,25 +1,32 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Install backend dependencies
-cd backend
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$ROOT_DIR"
+
+echo "Installing backend dependencies..."
 npm install
 
-# Install frontend dependencies
-cd ../frontend
-npm install
+echo "Installing frontend dependencies..."
+npm install --prefix frontend
 
-cd ..
-npm i -g nodemon
+if [[ ! -f .env ]]; then
+  cp .env.example .env
+  echo "Created .env from .env.example. Review its settings before starting."
+fi
 
-# Setup environment
-cp -n .env.example .env
-
-# Run backend
-cd backend
+echo "Starting AI-StudyMate backend and frontend..."
 npm run dev &
+BACKEND_PID=$!
 
-# Run frontend
-cd ../frontend
-npm run dev &
+npm run dev --prefix frontend &
+FRONTEND_PID=$!
+
+cleanup() {
+  kill "$BACKEND_PID" "$FRONTEND_PID" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
+echo "Backend:  http://localhost:5000"
+echo "Frontend: http://localhost:5173"
 wait
