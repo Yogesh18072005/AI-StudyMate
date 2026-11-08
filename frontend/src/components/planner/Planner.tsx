@@ -35,8 +35,8 @@ export default function Planner() {
     const [tasks, setTasks] = useState<PlannerTask[]>([])
     const [sid] = useState(() => Math.random().toString(36).slice(2, 10))
     const [plan, setPlan] = useState<WeeklyPlan | null>(null)
-    type MaterialEntry = { summary?: string | { answer?: string }; flashcards?: { flashcards?: Array<{ q: string; a: string }> }; [key: string]: unknown }
-    const [materials, setMaterials] = useState<Record<string, MaterialEntry> & { _chunks?: PlannerEvent[] }>({})
+    type MaterialEntry = { summary?: string | { answer?: string }; flashcards?: { flashcards?: Array<{ q: string; a: string }> } }
+    const [materials, setMaterials] = useState<Record<string, MaterialEntry>>({})
     const [, setLoadingStates] = useState<Record<string, { plan?: boolean; summary?: boolean; flashcards?: boolean }>>({})
     const wsRef = useRef<ReturnType<typeof connectPlannerStream> | null>(null)
     const [view, setView] = useState<"today" | "list" | "mindmap">("today")
@@ -94,9 +94,6 @@ export default function Planner() {
             }
             if (ev.type === "session.ended") {
                 addNotification("success", `Session completed: ${ev.session.minutesWorked} minutes`)
-            }
-            if (ev.type === "materials.chunk") {
-                setMaterials(m => ({ ...m, _chunks: [...(m._chunks || []), ev] }))
             }
             if (ev.type === "materials.done") { /* Completion is reflected by the request response. */ }
         })
@@ -326,11 +323,11 @@ export default function Planner() {
                                 )}
 
                                 {materials[t.id]?.summary && (
-                                    <div className="mt-3 text-sm text-zinc-200 whitespace-pre-wrap">{typeof materials[t.id].summary === "string" ? materials[t.id].summary : materials[t.id].summary?.answer}</div>
+                                    <div className="mt-3 text-sm text-zinc-200 whitespace-pre-wrap">{typeof materials[t.id]?.summary === "string" ? materials[t.id]?.summary : (materials[t.id]?.summary as { answer?: string } | undefined)?.answer}</div>
                                 )}
                                 {Array.isArray(materials[t.id]?.flashcards?.flashcards) && (
                                     <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                        {materials[t.id].flashcards.flashcards.map((c, i) => (
+                                        {materials[t.id]?.flashcards?.flashcards?.map((c, i) => (
                                             <div key={i} className="border border-zinc-800 rounded-lg p-2">
                                                 <div className="text-zinc-200 text-sm font-medium">Q: {c.q}</div>
                                                 <div className="text-zinc-400 text-sm">A: {c.a}</div>
