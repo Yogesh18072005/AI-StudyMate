@@ -1,30 +1,25 @@
-# Requires PowerShell 7+
 $ErrorActionPreference = "Stop"
+$root = $PSScriptRoot
 
-# Install backend dependencies
-Set-Location backend
+Write-Host "Installing backend dependencies..."
+Push-Location $root
 npm install
+if ($LASTEXITCODE -ne 0) { throw "Backend dependency installation failed." }
 
-# Install frontend dependencies
-Set-Location ../frontend
-npm install
+Write-Host "Installing frontend dependencies..."
+npm install --prefix frontend
+if ($LASTEXITCODE -ne 0) { throw "Frontend dependency installation failed." }
 
-Set-Location ..
-npm install -g nodemon
-
-# Setup environment
-if (-Not (Test-Path ".env")) {
-    Copy-Item .env.example .env
+if (-not (Test-Path (Join-Path $root ".env"))) {
+    Copy-Item (Join-Path $root ".env.example") (Join-Path $root ".env")
+    Write-Host "Created .env from .env.example. Review its settings before starting."
 }
 
-# Run backend
-Set-Location backend
-$backend = Start-Process npm -ArgumentList "run", "dev" -PassThru
+Pop-Location
 
-# Run frontend
-Set-Location ../frontend
-$frontend = Start-Process npm -ArgumentList "run", "dev" -PassThru
+Write-Host "Starting AI-StudyMate backend and frontend..."
+Start-Process -FilePath "cmd.exe" -ArgumentList @("/k", "cd /d `"$root`" && npm run dev")
+Start-Process -FilePath "cmd.exe" -ArgumentList @("/k", "cd /d `"$root`" && npm run dev --prefix frontend")
 
-# Wait for both processes to exit
-$backend.WaitForExit()
-$frontend.WaitForExit()
+Write-Host "Backend:  http://localhost:5000"
+Write-Host "Frontend: http://localhost:5173"
