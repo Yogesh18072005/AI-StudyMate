@@ -25,33 +25,45 @@ function extractFirstJsonObject(s: string): string {
 }
 
 function parseLooseStructuredPayload(s: string): { md: string; flashcards: FlashCard[]; topic?: string } | null {
-  // Some local models return JSON-like output with a YAML block marker:
-  // "answer": |\n  ...answer...\n"flashcards": []
-  const answerMatch = s.match(/["']answer["']\\s*:\\s*\\|\\s*([\\s\\S]*?)\\s*["']flashcards["']\\s*:/);
-  if (!answerMatch) return null;
+  // Recover the answer from JSON-like output where the model uses a YAML "|" marker.
+  const answerMarker = /["']answer["']\s*:\s*\|/;
+  const markerMatch = answerMarker.exec(s);
+  if (!markerMatch || markerMatch.index === undefined) return null;
 
-  const topicMatch = s.match(/["']topic["']\\s*:\\s*["']([^"']*)["']/);
-  const answerLines = answerMatch[1].replace(/\\r/g, "").split("\\n");
-  const nonEmptyLines = answerLines.filter((line) => line.trim().length > 0);
-  const commonIndent = nonEmptyLines.length
-    ? Math.min(...nonEmptyLines.map((line) => line.match(/^\\s*/)?.[0].length || 0))
-    : 0;
-  const md = answerLines.map((line) => line.slice(Math.min(commonIndent, line.length))).join("\\n").trim();
+  const topicMatch = /["']topic["']\s*:\s*["']([^"']*)["']/.exec(s);
+  const answerStart = markerMatch.index + markerMatch[0].length;
+  let answerText = s.slice(answerStart);
 
-  const flashcardsMatch = s.match(/["']flashcards["']\\s*:\\s*(\\[[\\s\\S]*?\\])/);
+  const flashcardsMarker = /["']flashcards["']\s*:/;
+  const flashcardsMatch = flashcardsMarker.exec(answerText);
   let flashcards: FlashCard[] = [];
-  if (flashcardsMatch) {
-    try {
-      const parsed = JSON.parse(flashcardsMatch[1]);
-      if (Array.isArray(parsed)) flashcards = parsed;
-    } catch { }
+  if (flashcardsMatch && flashcardsMatch.index !== undefined) {
+    const flashcardsText = answerText.slice(flashcardsMatch.index + flashcardsMatch[0].length).trim();
+    const arrayMatch = flashcardsText.match(/^(\[[\s\S]*?\])/);
+    if (arrayMatch) {
+      try {
+        const parsed = JSON.parse(arrayMatch[1]);
+        if (Array.isArray(parsed)) flashcards = parsed;
+      } catch { }
+    }
+    answerText = answerText.slice(0, flashcardsMatch.index);
   }
 
-  return {
-    md,
-    flashcards,
-    topic: topicMatch?.[1],
-  };
+  // Remove wrapper artifacts after the Markdown answer, preserving braces inside it.
+  answerText = answerText
+    .replace(/\r/g, "")
+    .replace(/^\s*\n/, "")
+    .replace(/\n?\s*[\x60]{3,}\s*$/g, "")
+    .replace(/\n?\s*\\?\s*\}\s*$/g, "");
+
+  const lines = answerText.split("\n");
+  const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+  const commonIndent = nonEmptyLines.length
+    ? Math.min(...nonEmptyLines.map((line) => line.match(/^\s*/)?.[0].length || 0))
+    : 0;
+  const md = lines.map((line) => line.slice(Math.min(commonIndent, line.length))).join("\n").trim();
+
+  return { md, flashcards, topic: topicMatch?.[1] };
 }
 
 function normalizePayload(payload: unknown): { md: string; flashcards: FlashCard[]; topic?: string } {
