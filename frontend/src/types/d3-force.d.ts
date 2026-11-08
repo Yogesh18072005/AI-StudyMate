@@ -9,9 +9,15 @@ declare module "d3-force" {
         fy?: number | null;
     }
 
+    export interface Force<NodeDatum extends SimulationNodeDatum> {
+        (alpha: number): void;
+        initialize?(nodes: NodeDatum[], random: () => number): void;
+        strength?(value: number): Force<NodeDatum>;
+    }
+
     export interface Simulation<NodeDatum extends SimulationNodeDatum> {
         nodes(nodes: NodeDatum[]): this;
-        force(name: string, force: unknown): this;
+        force(name: string, force: Force<NodeDatum> | null): this;
         alpha(value: number): this;
         alphaDecay(value: number): this;
         alphaTarget(value: number): this;
@@ -23,8 +29,12 @@ declare module "d3-force" {
     export function forceSimulation<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(
         nodes?: NodeDatum[]
     ): Simulation<NodeDatum>;
-    export function forceManyBody(): unknown;
-    export function forceLink(links?: unknown[]): unknown;
-    export function forceCollide(radius?: number): unknown;
-    export function forceRadial(radius: number, x?: number, y?: number): unknown;
+    export function forceManyBody<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(): Force<NodeDatum>;
+    export function forceLink<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(links?: unknown[]): Force<NodeDatum>;
+    export function forceCollide<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(radius?: number): Force<NodeDatum>;
+    export function forceRadial<NodeDatum extends SimulationNodeDatum = SimulationNodeDatum>(
+        radius: number,
+        x?: number,
+        y?: number
+    ): Force<NodeDatum>;
 }
