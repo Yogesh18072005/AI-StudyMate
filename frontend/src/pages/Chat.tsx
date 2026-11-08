@@ -10,7 +10,7 @@ import Composer from "../components/Chat/Composer";
 import BagFab from "../components/Chat/BagFab";
 import BagDrawer from "../components/Chat/BagDrawer";
 import LoadingIndicator from "../components/Chat/LoadingIndicator";
-import { useCompanion } from "../components/Companion/CompanionProvider";
+import { useCompanion } from "../components/Companion/useCompanion";
 
 type BagItem = { id: string; kind: "flashcard" | "note"; title: string; content: string };
 
