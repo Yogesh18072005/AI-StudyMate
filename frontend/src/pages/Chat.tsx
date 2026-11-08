@@ -384,11 +384,7 @@ export default function Chat() {
         </button>
       )}
 
-      <div
-        className={`grid grid-cols-1 ${
-          showTopics ? "xl:grid-cols-[1fr_320px] lg:grid-cols-[1fr_280px]" : ""
-        } gap-6 mt-20 lg:mt-6 mb-16`}
-      >
+      <div className="mt-20 lg:mt-6 mb-16 min-w-0">
         <div className="flex-1 min-w-0 pr-0 lg:pr-2">
           <div className="w-full max-w-4xl mx-auto p-2 sm:p-4 pt-2 pb-28">
             <div className="space-y-6">
@@ -444,14 +440,17 @@ export default function Chat() {
           </div>
         </div>
 
-        {showTopics && (
+      </div>
+
+      {showTopics && (
+        <aside className="hidden lg:block fixed right-4 top-24 bottom-6 z-30 w-[280px] xl:w-[320px]">
           <FlashCards
             items={cards}
             onAdd={({ kind, title, content }) => addToBag(kind, title, content)}
             onToggleCollapse={() => setShowTopics(false)}
           />
-        )}
-      </div>
+        </aside>
+      )}
 
       <SelectionPopup
         selected={selected}
