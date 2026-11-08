@@ -15,5 +15,40 @@ export default defineConfig(({ mode }) => {
       port: Number(env.VITE_FRONTEND_PORT) || 4173,
     },
     envDir: path.resolve(__dirname, ".."),
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("/node_modules/")) return;
+
+            if (
+              id.includes("/react/") ||
+              id.includes("/react-dom/") ||
+              id.includes("/scheduler/")
+            ) {
+              return "react-vendor";
+            }
+
+            if (
+              id.includes("/react-markdown/") ||
+              id.includes("/rehype-") ||
+              id.includes("/remark-") ||
+              id.includes("/highlight.js/") ||
+              id.includes("/katex/")
+            ) {
+              return "markdown-vendor";
+            }
+
+            if (id.includes("/d3-force/")) {
+              return "visualization-vendor";
+            }
+
+            if (id.includes("/@cognicatch/")) {
+              return "cognicatch-vendor";
+            }
+          },
+        },
+      },
+    },
   };
 });
