@@ -288,3 +288,13 @@ Third-party libraries and services used by the application remain subject to the
 ---
 
 **AI-StudyMate — Learn smarter with AI.**
+
+### Backend origin allowlist
+
+The backend uses an explicit CORS allowlist. Set `CORS_ALLOWED_ORIGINS` in your local `.env` to a comma-separated list of exact frontend origins, including the scheme and port. For local development, the template allows:
+
+```env
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+```
+
+For deployment, replace these values with your actual frontend origin(s). Do not use `*` when credentials are enabled. Keep API keys and other secrets in `.env`, which is excluded from Git.
