@@ -2,10 +2,10 @@
 
 **An AI-powered study companion for learning, revision, and academic productivity.**
 
-AI-StudyMate is a student-focused web application based on the open-source [PageLM](https://github.com/CaviraOSS/PageLM) project. It brings AI-assisted study workflows into one interface, including document-based learning, question answering, revision tools, and study organization.
+AI-StudyMate is a student-focused web application that brings AI-assisted study workflows into one interface, including document-based learning, question answering, revision tools, and study organization.
 
-> **Project maintainer and customization:** [Yogesh18072005](https://github.com/Yogesh18072005)  
-> This repository contains my project-level customization, configuration, branding, and development work on top of the upstream PageLM codebase. Original upstream work remains credited to its respective authors and is subject to the original license.
+> **Project maintainer:** [Yogesh18072005](https://github.com/Yogesh18072005)  
+> This repository contains my project-specific configuration, branding, documentation, and development work. Original third-party contributions remain credited to their respective authors and are subject to their applicable licenses.
 
 ---
 
