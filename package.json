@@ -1,5 +1,5 @@
 {
-  "name": "pagelm",
+  "name": "ai-studymate",
   "scripts": {
     "dev": "nodemon",
     "build": "tsc -p backend/tsconfig.json",
@@ -8,8 +8,7 @@
     "test:watch": "vitest"
   },
   "authors": [
-    "nullure (https://github.com/nullure)",
-    "recabasic (https://github.com/recabasic)"
+    "Yogesh Chhikara (https://github.com/Yogesh18072005)"
   ],
   "engines": {
     "node": ">=21.18.0"
