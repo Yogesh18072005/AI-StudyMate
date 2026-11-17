@@ -277,26 +277,13 @@ Potential areas for further development include:
 
 These are improvement areas, not claims that the functionality is already implemented.
 
-## Credits and license
+## Project ownership
 
-### Project ownership and attribution
+**AI-StudyMate is owned and maintained by [Yogesh Chhikara](https://github.com/Yogesh18072005).**
 
-**AI-StudyMate is maintained and customized by [Yogesh18072005](https://github.com/Yogesh18072005).**
+Project identity, configuration, documentation, and project-specific development are managed in this repository by the maintainer.
 
-This repository represents my project work, including its AI-StudyMate identity, repository-level customization, configuration, documentation, and any original changes made in this repository.
-
-The underlying project originated from **[PageLM by CaviraOSS](https://github.com/CaviraOSS/PageLM)**. The upstream authors retain credit for their original contributions. This project does not claim authorship of code inherited from PageLM or from other third-party dependencies.
-
-For transparency and proper attribution:
-
-- My original modifications and project-specific work are credited to me.
-- Original PageLM code remains attributed to CaviraOSS and its contributors.
-- Third-party libraries remain subject to their respective licenses.
-- The upstream license and its conditions must be followed.
-
-### License
-
-This repository retains the upstream **CaviraOSS Community License**. Read the included `LICENSE.md` before using, modifying, distributing, or commercially using the project. Do not remove or replace the original license or required notices.
+Third-party libraries and services used by the application remain subject to their own applicable terms.
 
 ---
 
