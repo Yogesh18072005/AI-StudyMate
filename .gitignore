@@ -1,23 +1,35 @@
 # IDE
-.idea
+.idea/
+.vscode/
 
 # Dependencies
-node_modules
+node_modules/
 
 # Build output
-dist
-storage
+dist/
+frontend/dist/
+coverage/
 
 # Cache
-.vite
-.cache
+.vite/
+.cache/
 
-# Environment
+# Environment files (keep only the safe template)
 .env
+.env.*
+!.env.example
 
-# Database
+# Secrets and local credentials
+*.pem
+*.key
+credentials*.json
+service-account*.json
+
+# Local application data
+storage/
 database.sqlite
+*.sqlite
+*.sqlite-journal
 
 # TypeScript build info
-tsconfig.tsbuildinfo
-vite.config.tsbuildinfo
+*.tsbuildinfo
