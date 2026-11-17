@@ -1,42 +1,161 @@
 # AI-StudyMate 🎓
 
-**Your AI-powered study companion.**
+**An AI-powered study companion for learning, revision, and academic productivity.**
 
-AI-StudyMate is a customized version of the open-source PageLM project, designed to make studying more interactive with AI-powered learning tools.
+AI-StudyMate is a student-focused web application based on the open-source [PageLM](https://github.com/CaviraOSS/PageLM) project. It brings AI-assisted study workflows into one interface, including document-based learning, question answering, revision tools, and study organization.
 
-Upload study materials, ask questions, create quizzes, generate flashcards, organize notes, and explore other learning tools in one place.
+> **Project maintainer and customization:** [Yogesh18072005](https://github.com/Yogesh18072005)  
+> This repository contains my project-level customization, configuration, branding, and development work on top of the upstream PageLM codebase. Original upstream work remains credited to its respective authors and is subject to the original license.
 
-## ✨ Features
+---
 
-- **AI Chat:** Ask questions and interact with your study materials.
-- **Smart Notes:** Generate structured study notes.
-- **Flashcards:** Create flashcards for revision.
-- **Quizzes:** Test your understanding with interactive quizzes.
-- **AI Podcasts:** Turn learning material into audio.
-- **Voice Transcription:** Convert recordings into searchable study material.
-- **Homework Planner:** Organize homework and study tasks.
-- **ExamLab:** Practise exam-style questions.
-- **Debate:** Improve critical thinking through AI discussions.
-- **Study Companion:** Get assistance while learning.
+## Contents
 
-## 🛠️ Technology Stack
+- [Project at a glance](#project-at-a-glance)
+- [Features](#features)
+- [Technology stack](#technology-stack)
+- [AI providers and processing](#ai-providers-and-processing)
+- [Algorithms and technical techniques](#algorithms-and-technical-techniques)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Installation and setup](#installation-and-setup)
+- [Run the application](#run-the-application)
+- [Validation](#validation)
+- [Configuration notes](#configuration-notes)
+- [Project structure](#project-structure)
+- [Limitations and future work](#limitations-and-future-work)
+- [Credits and license](#credits-and-license)
 
-| Component | Technology |
+## Project at a glance
+
+| Item | Details |
 |---|---|
-| Frontend | React, Vite, TypeScript |
+| Project | AI-StudyMate |
+| Domain | Artificial Intelligence / Educational Technology |
+| Application type | Web application |
+| Frontend | React, TypeScript, Vite |
 | Backend | Node.js, TypeScript |
 | Styling | Tailwind CSS |
-| AI Integration | LangChain and supported LLM providers |
-| Database | JSON by default, optional vector database |
+| AI orchestration | LangChain ecosystem |
+| Default AI configuration | Local Ollama (configurable) |
+| Default embedding/storage mode | `db_mode=json` in the example environment |
+| Backend development port | `5000` |
+| Frontend development port | `5173` |
 
-## 🚀 Getting Started
+## Features
 
-### Prerequisites
+The project README and application are organized around the following learning tools. Availability of individual tools can depend on configuration and connected providers.
 
-- Node.js **22.23.4** (see `.nvmrc`)
+- **AI Chat:** Ask questions and interact with learning material.
+- **Smart Notes:** Create structured notes from study content.
+- **Flashcards:** Prepare revision cards.
+- **Quizzes:** Practise and check understanding.
+- **AI Podcasts:** Convert learning material into audio.
+- **Voice Transcription:** Turn recordings into text-based study material.
+- **Homework Planner:** Organize homework and study tasks.
+- **ExamLab:** Practise exam-style questions.
+- **Debate:** Explore topics through AI-assisted discussion.
+- **Study Companion:** Get assistance while studying.
+
+## Technology stack
+
+The following technologies are reflected in the repository's package manifests and environment template.
+
+| Layer | Technologies / libraries | Purpose |
+|---|---|---|
+| Frontend | React, TypeScript, Vite | User interface and frontend development |
+| Routing and UI | React Router, React Markdown | Navigation and Markdown rendering |
+| Styling | Tailwind CSS | UI styling |
+| Backend | Node.js, TypeScript | Server-side application |
+| AI orchestration | LangChain, LangGraph, LangChain integrations | Connecting model providers and AI workflows |
+| Document processing | pdf-parse, Mammoth, docxtemplater, pdf-lib | PDF and Word-document processing |
+| Text processing | LangChain text splitters, Marked | Text segmentation and content rendering |
+| Local AI runtime | Ollama | Run supported language and embedding models locally |
+| Storage-related packages | Keyv, @keyv/sqlite | Key-value storage integrations |
+| Testing | Vitest | Automated test execution |
+| Development tools | Nodemon, ts-node, tsx, ESLint | Development, execution, and code quality |
+
+The exact runtime path and storage backend depend on the application's configuration. The example environment sets `db_mode=json`; do not assume that every optional storage integration is active in every setup.
+
+## AI providers and processing
+
+### Language-model providers
+
+The environment template contains configuration options for:
+
+- Ollama
+- Google Gemini
+- OpenAI
+- Anthropic Claude
+- xAI Grok
+- OpenRouter
+- Requesty
+- LiteLLM
+- Cheaper Inference
+- Atlas Cloud
+- Opper
+- Runcrate
+- MiniMax
+- API Route
+
+A provider must be selected and configured with the appropriate credentials or local runtime. Listing a provider here means the repository includes configuration support; it does not mean that provider is active by default.
+
+### Default local configuration
+
+The example environment uses Ollama for chat and embeddings:
+
+```env
+LLM_PROVIDER=ollama
+EMB_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2:3b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+This local setup avoids a hosted LLM API key for the configured Ollama models. It still requires Ollama to be installed, running, and supplied with the required models.
+
+### Speech and audio integrations
+
+The environment template also contains settings for text-to-speech and transcription providers, including Edge TTS, Google, ElevenLabs, Speech SDK, VoxCPM, OpenAI, and AssemblyAI. The active service depends on the relevant environment settings and credentials.
+
+## Algorithms and technical techniques
+
+The repository includes libraries for model orchestration, text splitting, embeddings, and document extraction. These support the following technical areas:
+
+| Area | Repository-level evidence | Role |
+|---|---|---|
+| Language-model orchestration | LangChain packages and provider integrations | Connects application workflows to supported LLMs |
+| Text splitting | `@langchain/textsplitters` | Supports dividing long text into manageable segments |
+| Embeddings | Configurable embedding provider and model settings | Supports converting text into vector representations when used by the configured workflow |
+| PDF extraction | `pdf-parse` | Extracts text from PDF documents |
+| Word-document extraction | `mammoth` | Extracts content from DOCX documents |
+| Audio transcription and speech | Speech/transcription dependencies and provider settings | Supports audio-related study workflows |
+
+**Implementation accuracy note:** The exact retrieval algorithm, chunking strategy, similarity metric, ranking method, and whether a complete Retrieval-Augmented Generation (RAG) pipeline is active must be confirmed from the corresponding source-code path and runtime configuration. They are deliberately not claimed here as specific implemented algorithms without that verification. Do not describe a library dependency alone as proof that a particular algorithm is used end to end.
+
+## Architecture
+
+At a high level, the repository is separated into a frontend and backend:
+
+1. **Frontend:** React application built with Vite; provides the student-facing interface.
+2. **Backend:** Node.js and TypeScript application; handles server-side application workflows.
+3. **AI integration layer:** LangChain integrations connect supported model and embedding providers.
+4. **Document and content processing:** Libraries support PDF/DOCX extraction, text processing, and audio-related workflows.
+5. **Configuration and storage:** Environment variables select providers and runtime settings; the example configuration uses JSON mode.
+
+This is a repository-level overview, not a substitute for a verified component diagram. Update it if implementation details change.
+
+## Requirements
+
+- Node.js **22.23.4** (specified in `.nvmrc`)
 - npm
 - Git
-- [Ollama](https://ollama.com/) for the default local AI configuration
+- Ollama for the default local AI configuration
+- Sufficient memory and disk space for the selected local models
+
+The root package declares Node.js `>=21.18.0`, while `.nvmrc` pins the recommended development version to `22.23.4`.
+
+## Installation and setup
 
 ### 1. Clone the repository
 
@@ -47,7 +166,7 @@ cd AI-StudyMate
 
 ### 2. Install dependencies
 
-Run these commands from the project root:
+Run from the project root:
 
 ```bash
 npm install
@@ -56,7 +175,7 @@ npm install --prefix frontend
 
 ### 3. Configure environment variables
 
-Create your local environment file:
+Create a local environment file.
 
 **Windows PowerShell:**
 
@@ -64,107 +183,120 @@ Create your local environment file:
 Copy-Item .env.example .env
 ```
 
-The example configuration uses Ollama locally by default. Make sure Ollama is running, then download the configured chat and embedding models once:
+Review `.env` and choose the AI providers you intend to use. For the default local setup, install and start [Ollama](https://ollama.com/), then download the configured models:
 
 ```bash
 ollama pull llama3.2:3b
 ollama pull nomic-embed-text
 ```
 
-If you choose a hosted AI provider instead, update the relevant provider and API-key settings in `.env`. Hosted providers may incur usage charges.
+If you select a hosted provider, add its API key and update the provider/model settings as required. Hosted providers may charge for usage.
 
-**Never commit your `.env` file or share API keys.**
+**Security:** Never commit `.env`, API keys, service-account files, or other secrets to Git.
 
-### 4. Start the backend
+## Run the application
 
-From the project root:
+Open two terminals in the project root.
+
+**Terminal 1 — backend:**
 
 ```bash
 npm run dev
 ```
 
-Backend address: `http://localhost:5000`
+Backend development address: [http://localhost:5000](http://localhost:5000)
 
-### 5. Start the frontend
-
-Open a second terminal at the project root:
+**Terminal 2 — frontend:**
 
 ```bash
 npm run dev --prefix frontend
 ```
 
-Frontend address: `http://localhost:5173`
+Frontend development address: [http://localhost:5173](http://localhost:5173)
 
 Open the frontend address in your browser.
 
-### Optional: use the setup script
+### Optional setup scripts
 
 - Windows PowerShell: `./setup.ps1`
 - macOS/Linux: `bash ./setup.sh`
 
-The scripts install both dependency sets, create `.env` if it is missing, and start the backend and frontend.
+The scripts are provided to assist with dependency installation and local setup. Review them before execution if you have customized your environment.
 
-## 🧪 Validation
+## Validation
 
-Run backend tests and build from the project root:
+Run the backend tests and TypeScript build from the project root:
 
 ```bash
 npm test
 npm run build
 ```
 
-Run frontend lint and production build:
+Run frontend linting and production build:
 
 ```bash
 npm run lint --prefix frontend
 npm run build --prefix frontend
 ```
 
-## 🤖 Supported AI Providers
+A successful build or test command does not by itself verify every AI provider or external integration. Test those separately using the provider configuration you plan to demonstrate.
 
-The codebase supports integrations including:
+## Configuration notes
 
-- Google Gemini
-- OpenAI
-- Anthropic Claude
-- xAI Grok
-- Ollama
-- OpenRouter
+- Keep local settings in `.env`; use `.env.example` as the template.
+- The example environment selects Ollama for language-model and embedding tasks.
+- Hosted model providers require valid credentials and may incur charges.
+- Speech generation and transcription use separate provider settings.
+- Do not publish private keys, tokens, personal documents, or service-account credentials.
 
-Provider availability depends on configuration and credentials. Local Ollama inference does not require a hosted LLM API key, but it does require the models to be downloaded on your computer.
-
-## 📁 Project Structure
+## Project structure
 
 ```text
 AI-StudyMate/
-├── backend/
+├── backend/             # Node.js / TypeScript backend
 ├── frontend/
-│   ├── public/
-│   └── src/
-├── .env.example
-├── package.json
+│   ├── public/          # Static frontend assets
+│   └── src/             # React application source
+├── .env.example         # Example configuration (no real secrets)
+├── .nvmrc               # Recommended Node.js version
+├── package.json         # Backend/root scripts and dependencies
 └── README.md
 ```
 
-## 🎯 Project Goal
+## Limitations and future work
 
-The goal of AI-StudyMate is to provide students with a single platform for understanding concepts, organizing study material, practising questions, and improving their learning experience with AI.
+Potential areas for further development include:
 
-## 🙏 Original Project & Credits
+- Add verified architecture, data-flow, and use-case diagrams.
+- Document the actual document retrieval and answer-generation pipeline in detail.
+- Add reproducible test cases for document uploads, AI responses, and provider failures.
+- Document data retention, privacy, and security behavior.
+- Add screenshots and a short demonstration workflow.
+- Improve setup guidance for different operating systems and AI providers.
+- Add deployment instructions once a supported deployment target is selected.
 
-AI-StudyMate is based on **PageLM**, originally developed by [CaviraOSS](https://github.com/CaviraOSS/PageLM).
+These are improvement areas, not claims that the functionality is already implemented.
 
-This repository contains personal customization and modifications built on top of the original project.
+## Credits and license
 
-Please refer to the original repository for upstream updates and acknowledgements.
+### Project ownership and attribution
 
-Original repository: https://github.com/CaviraOSS/PageLM
+**AI-StudyMate is maintained and customized by [Yogesh18072005](https://github.com/Yogesh18072005).**
 
-## 📜 License
+This repository represents my project work, including its AI-StudyMate identity, repository-level customization, configuration, documentation, and any original changes made in this repository.
 
-The original project is distributed under the CaviraOSS Community License.
+The underlying project originated from **[PageLM by CaviraOSS](https://github.com/CaviraOSS/PageLM)**. The upstream authors retain credit for their original contributions. This project does not claim authorship of code inherited from PageLM or from other third-party dependencies.
 
-Please retain and follow the original `LICENSE.md` terms. Commercial use or resale requires prior written permission from CaviraOSS, according to the original project README.
+For transparency and proper attribution:
+
+- My original modifications and project-specific work are credited to me.
+- Original PageLM code remains attributed to CaviraOSS and its contributors.
+- Third-party libraries remain subject to their respective licenses.
+- The upstream license and its conditions must be followed.
+
+### License
+
+This repository retains the upstream **CaviraOSS Community License**. Read the included `LICENSE.md` before using, modifying, distributing, or commercially using the project. Do not remove or replace the original license or required notices.
 
 ---
 
