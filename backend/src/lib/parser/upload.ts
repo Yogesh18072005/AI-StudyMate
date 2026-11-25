@@ -54,7 +54,7 @@ export async function handleUpload(a: { filePath: string; filename?: string; con
   const _emb = isO
     ? new OllamaEmbeddings({ model: process.env.OLLAMA_MODEL || 'llama3' })
     : new OpenAIEmbeddings({ model: 'text-embedding-3-small', openAIApiKey: process.env.OPENROUTER_API_KEY, configuration: { baseURL: 'https://openrouter.ai/api/v1' } })
-  await embedTextFromFile(out, ns)
+  await embedTextFromFile(out, ns, a.filename || path.basename(fp))
   return { stored: out }
 }
 
