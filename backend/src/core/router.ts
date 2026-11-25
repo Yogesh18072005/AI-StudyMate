@@ -1,3 +1,4 @@
+import { healthRoutes } from "./routes/health";
 import { chatRoutes } from "./routes/chat";
 import { quizRoutes } from "./routes/quiz";
 import { flashcardRoutes } from "./routes/flashcards";
@@ -10,6 +11,7 @@ import { debateRoutes } from "./routes/debate";
 import { companionRoutes } from "./routes/companion";
 
 export function registerRoutes(app: any) {
+  healthRoutes(app);
   chatRoutes(app);
   quizRoutes(app);
   examRoutes(app);
