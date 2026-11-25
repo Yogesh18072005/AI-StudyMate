@@ -28,6 +28,7 @@ services:
         VITE_TIMEOUT: 90000
     container_name: ai-studymate-frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "5173:5173"
