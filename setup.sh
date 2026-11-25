@@ -4,11 +4,20 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-echo "Installing backend dependencies..."
-npm install
+command -v node >/dev/null 2>&1 || {
+  echo "Node.js is required. Install the version specified in .nvmrc." >&2
+  exit 1
+}
+command -v corepack >/dev/null 2>&1 || {
+  echo "Corepack is required to install the frontend's pinned pnpm version." >&2
+  exit 1
+}
 
-echo "Installing frontend dependencies..."
-npm install --prefix frontend
+echo "Installing backend dependencies from package-lock.json..."
+npm ci --legacy-peer-deps
+
+echo "Installing frontend dependencies from pnpm-lock.yaml..."
+corepack pnpm --dir frontend install --frozen-lockfile
 
 if [[ ! -f .env ]]; then
   cp .env.example .env
@@ -19,7 +28,7 @@ echo "Starting AI-StudyMate backend and frontend..."
 npm run dev &
 BACKEND_PID=$!
 
-npm run dev --prefix frontend &
+corepack pnpm --dir frontend dev &
 FRONTEND_PID=$!
 
 cleanup() {
