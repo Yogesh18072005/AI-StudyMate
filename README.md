@@ -20,6 +20,7 @@ AI-StudyMate is a student-focused web application that brings AI-assisted study 
 - [Requirements](#requirements)
 - [Installation and setup](#installation-and-setup)
 - [Run the application](#run-the-application)
+- [Run with Docker Compose](#run-with-docker-compose)
 - [Validation](#validation)
 - [Configuration notes](#configuration-notes)
 - [Project structure](#project-structure)
