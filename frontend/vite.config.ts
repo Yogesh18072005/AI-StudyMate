@@ -29,12 +29,18 @@ export default defineConfig(({ mode }) => {
               return "react-vendor";
             }
 
+            if (id.includes("/katex/") || id.includes("/rehype-katex/")) {
+              return "math-vendor";
+            }
+
+            if (id.includes("/highlight.js/") || id.includes("/rehype-highlight/")) {
+              return "highlight-vendor";
+            }
+
             if (
               id.includes("/react-markdown/") ||
               id.includes("/rehype-") ||
-              id.includes("/remark-") ||
-              id.includes("/highlight.js/") ||
-              id.includes("/katex/")
+              id.includes("/remark-")
             ) {
               return "markdown-vendor";
             }
