@@ -242,6 +242,34 @@ corepack pnpm --dir frontend run build
 
 A successful build or test command does not by itself verify every AI provider or external integration. Test those separately using the provider configuration you plan to demonstrate.
 
+
+
+### Run with Docker Compose
+
+Docker Desktop (or another Docker Engine with Compose v2) must be running before these commands. From the repository root, first create your local environment file if it does not exist:
+
+**Windows PowerShell:**
+
+```powershell
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+docker compose config --quiet
+docker compose up --build -d
+docker compose ps
+```
+
+Open the frontend at [http://localhost:5173](http://localhost:5173). The backend exposes [http://localhost:5000/healthz](http://localhost:5000/healthz) for a machine-readable liveness check. Compose waits for the backend container health check before starting the frontend. To inspect startup problems:
+
+```powershell
+docker compose logs --tail=100```
+
+Stop the containers with:
+
+```powershell
+docker compose down
+```
+
+The health endpoint confirms that the backend process is responding; it does not prove that an AI provider, model, or external integration is configured correctly. Validate those separately with your chosen provider.
+
 ## Configuration notes
 
 - Keep local settings in `.env`; use `.env.example` as the template.
