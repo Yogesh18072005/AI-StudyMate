@@ -4,7 +4,7 @@ import crypto from "crypto"
 import { config } from "../../config/env"
 import llm from "../../utils/llm/llm"
 import { execDirect } from "../../agents/runtime"
-import { normalizeTopic } from "../../utils/text/normalize"
+import { normalizeTopic } from "../../utils/text/normalize"\nimport { buildGroundedContext } from "./context"
 
 export type AskCard = { q: string; a: string; tags?: string[] }
 export type AskPayload = { topic: string; answer: string; flashcards: AskCard[] }
@@ -89,7 +89,7 @@ Return ONLY one valid JSON object with this structure:
   "flashcards": []
 }
 
-The answer field must contain the full response. Do not truncate the answer or put the answer outside the JSON object. Create up to 3 useful flashcards only when appropriate; otherwise return an empty array.
+The answer field must contain the full response. Do not truncate the answer or put the answer outside the JSON object. When the supplied context contains source labels such as [S1], cite factual claims based on that context using the exact label (for example, [S1]). Never invent source labels or citations. If no source labels are supplied, do not create citations.\n\nCreate up to 3 useful flashcards only when appropriate; otherwise return an empty array.
 `.trim()
 
 const cacheDir = path.join(process.cwd(), "storage", "cache", "ask")
@@ -151,7 +151,7 @@ export async function askWithContext(opts: AskWithContextOptions): Promise<AskPa
   const historyCache = serializeHistoryForCache(historyArr)
 
   // Bump this version when response parsing changes so malformed cached answers are regenerated.
-  const ck = { parserVersion: 2, t: opts.cacheScope || "ask_ctx", q: safeQ, ctx, topic, sys: systemPrompt, hist: historyCache }
+  const ck = { parserVersion: 3, t: opts.cacheScope || "ask_ctx", q: safeQ, ctx, topic, sys: systemPrompt, hist: historyCache }
   const cached = readCache(ck)
   if (cached) return cached
 
