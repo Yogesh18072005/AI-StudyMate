@@ -149,6 +149,7 @@ This is a repository-level overview, not a substitute for a verified component d
 
 - Node.js **22.23.4** (specified in `.nvmrc`)
 - npm
+- Corepack (ships with supported Node.js releases) and pnpm 10 for the frontend
 - Git
 - Ollama for the default local AI configuration
 - Sufficient memory and disk space for the selected local models
@@ -166,11 +167,11 @@ cd AI-StudyMate
 
 ### 2. Install dependencies
 
-Run from the project root:
+Run from the project root. The backend uses npm and the frontend uses the pinned pnpm 10 toolchain:
 
 ```bash
-npm install
-npm install --prefix frontend
+npm ci --legacy-peer-deps
+corepack pnpm --dir frontend install --frozen-lockfile
 ```
 
 ### 3. Configure environment variables
