@@ -4,6 +4,7 @@ import { Chroma } from "@langchain/community/vectorstores/chroma"
 import { Document } from "@langchain/core/documents"
 import { EmbeddingsInterface } from "@langchain/core/embeddings"
 import { config } from "../../config/env"
+import { mergeStoredDocuments } from "./document-merge"
 
 const memoryStores: Record<string, any> = {}
 const retrieverCache: Record<string, any> = {}
@@ -17,17 +18,17 @@ export async function saveDocuments(
     const file = path.join(process.cwd(), "storage", "json", `${collection}.json`)
     const dir = path.dirname(file)
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(
-      file,
-      JSON.stringify(
-        docs.map(d => ({
-          pageContent: typeof d.pageContent === "string" ? d.pageContent : String(d.pageContent ?? ""),
-          metadata: d.metadata || {}
-        })),
-        null,
-        2
-      )
-    )
+
+    const incoming = docs.map(d => ({
+      pageContent: typeof d.pageContent === "string" ? d.pageContent : String(d.pageContent ?? ""),
+      metadata: d.metadata || {},
+    }))
+    const existing = fs.existsSync(file)
+      ? JSON.parse(fs.readFileSync(file, "utf-8"))
+      : []
+    const merged = mergeStoredDocuments(Array.isArray(existing) ? existing : [], incoming)
+    fs.writeFileSync(file, JSON.stringify(merged, null, 2))
+
     delete memoryStores[collection]
     delete retrieverCache[collection]
   } else {
