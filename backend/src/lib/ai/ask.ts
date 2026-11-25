@@ -4,7 +4,8 @@ import crypto from "crypto"
 import { config } from "../../config/env"
 import llm from "../../utils/llm/llm"
 import { execDirect } from "../../agents/runtime"
-import { normalizeTopic } from "../../utils/text/normalize"\nimport { buildGroundedContext } from "./context"
+import { normalizeTopic } from "../../utils/text/normalize"
+import { buildGroundedContext } from "./context"
 
 export type AskCard = { q: string; a: string; tags?: string[] }
 export type AskPayload = { topic: string; answer: string; flashcards: AskCard[] }
@@ -89,7 +90,9 @@ Return ONLY one valid JSON object with this structure:
   "flashcards": []
 }
 
-The answer field must contain the full response. Do not truncate the answer or put the answer outside the JSON object. When the supplied context contains source labels such as [S1], cite factual claims based on that context using the exact label (for example, [S1]). Never invent source labels or citations. If no source labels are supplied, do not create citations.\n\nCreate up to 3 useful flashcards only when appropriate; otherwise return an empty array.
+The answer field must contain the full response. Do not truncate the answer or put the answer outside the JSON object. When the supplied context contains source labels such as [S1], cite factual claims based on that context using the exact label (for example, [S1]). Never invent source labels or citations. If no source labels are supplied, do not create citations.
+
+Create up to 3 useful flashcards only when appropriate; otherwise return an empty array.
 `.trim()
 
 const cacheDir = path.join(process.cwd(), "storage", "cache", "ask")
@@ -225,8 +228,8 @@ export async function handleAsk(
       ctx: { ns: nsFinal }
     })
 
-    const ctxDocs = Array.isArray(rag?.result) ? (rag.result as Array<{ text?: string }>) : []
-    ctx = ctxDocs.map(d => d?.text || "").join("\n\n") || "NO_CONTEXT"
+    const ctxDocs = Array.isArray(rag?.result) ? (rag.result as Array<{ text?: string; meta?: Record<string, unknown> }>) : []
+    ctx = buildGroundedContext(ctxDocs)
   }
   const topic = guessTopic(safeQ) || "General"
 
