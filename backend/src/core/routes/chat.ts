@@ -105,7 +105,7 @@ export function chatRoutes(app: any) {
           let answer: any = "";
 
           const msgHistory = await getMsgs(id);
-          const relevantHistory = msgHistory.slice(-20);
+          // The current question was just persisted above; only pass earlier turns as history.\n          const relevantHistory = msgHistory.slice(-21, -1);
 
           answer = await handleAsk({
             q,
