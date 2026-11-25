@@ -1,12 +1,10 @@
-version: "3.9"
-
 services:
   backend:
     build:
       context: .
       dockerfile: backend/Dockerfile
       target: runtime
-    container_name: pagelm-backend
+    container_name: ai-studymate-backend
     env_file:
       - ./.env
     environment:
@@ -28,7 +26,7 @@ services:
       args:
         VITE_BACKEND_URL: ${VITE_BACKEND_URL}
         VITE_TIMEOUT: 90000
-    container_name: pagelm-frontend
+    container_name: ai-studymate-frontend
     depends_on:
       - backend
     ports:
