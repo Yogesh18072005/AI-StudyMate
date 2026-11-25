@@ -210,7 +210,7 @@ Backend development address: [http://localhost:5000](http://localhost:5000)
 **Terminal 2 — frontend:**
 
 ```bash
-npm run dev --prefix frontend
+corepack pnpm --dir frontend dev
 ```
 
 Frontend development address: [http://localhost:5173](http://localhost:5173)
@@ -236,8 +236,8 @@ npm run build
 Run frontend linting and production build:
 
 ```bash
-npm run lint --prefix frontend
-npm run build --prefix frontend
+corepack pnpm --dir frontend run lint
+corepack pnpm --dir frontend run build
 ```
 
 A successful build or test command does not by itself verify every AI provider or external integration. Test those separately using the provider configuration you plan to demonstrate.
